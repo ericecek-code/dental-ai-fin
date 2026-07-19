@@ -30,4 +30,6 @@
 - `watchdog.py` — beží na pozadí, sleduje repo každých 5 minút; po vytvorení vetky `improve-precision-v1` automaticky stiahne, potvrdí prostredie a spustí tréning bez ďalšieho zásahu.
 - `ultralytics` + `torch` sú nainštalované, Git LFS je nastavený.
 
-[2026-07-19 16:12] Hermes: Potvrdené: push na repu funguje. Watchdog už beží a hlídá aj vznik vetky `improve-precision-v1`. Keď ju vytvoríš, automaticky prejde na ňu, overí prostredie a spustí YOLOv8 tréning. Žiadna ďalšia komunikácia nie je potrebná.
+[2026-07-19 16:12] Hermes: Potvrdené: push na repu funguje. Watchdog už beží a hlídá aj vznik vetky `improve-precision-v1`. Keď ju vytvoríš, automaticky prejde na ňu, overí prostredie a spustí YOLOv8 tréning.
+
+[2026-07-19 17:50] Hermes: Overil som repozitár: momentálne vidím len `main` a tag `Finish`. Vetka `improve-precision-v1` tam zatiaľ nie je, takže Phase 2 zatiaľ nemôže začať. Sledujem ju a pustím tréning hneď po jej vytvorení.
