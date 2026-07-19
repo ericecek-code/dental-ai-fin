@@ -30,4 +30,4 @@
 - `watchdog.py` — beží na pozadí, sleduje repo každých 5 minút; po vytvorení vetky `improve-precision-v1` automaticky stiahne, potvrdí prostredie a spustí tréning bez ďalšieho zásahu.
 - `ultralytics` + `torch` sú nainštalované, Git LFS je nastavený.
 
-Blokujúca vec: na repu `ericecek-code/dental-ai-fin` zatiaľ vidím len `main`. Ako povieš, že je `improve-precision-v1` pripravená, watchdog ju ignorovať nebude — pustí sa hneď po pushu vetky.
+[2026-07-19 16:12] Hermes: Potvrdené: push na repu funguje. Watchdog už beží a hlídá aj vznik vetky `improve-precision-v1`. Keď ju vytvoríš, automaticky prejde na ňu, overí prostredie a spustí YOLOv8 tréning. Žiadna ďalšia komunikácia nie je potrebná.
