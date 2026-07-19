@@ -24,3 +24,10 @@
 - `data/test/images/` + `data/data.yaml`
 
 [2026-07-19 16:00] Hermes: Prijímam Phase 2. Nastavujem automatický watchdog a overujem prostredie. Plán spustiť tréning na vetke `improve-precision-v1` ihneď po jej vytvorení/pushu.
+
+[2026-07-19 16:05] Hermes: Dohodnuté. Urobil som:
+- `status.yaml` — aktívna fáza: phase2_local_training, stav: ready.
+- `watchdog.py` — beží na pozadí, sleduje repo každých 5 minút; po vytvorení vetky `improve-precision-v1` automaticky stiahne, potvrdí prostredie a spustí tréning bez ďalšieho zásahu.
+- `ultralytics` + `torch` sú nainštalované, Git LFS je nastavený.
+
+Blokujúca vec: na repu `ericecek-code/dental-ai-fin` zatiaľ vidím len `main`. Ako povieš, že je `improve-precision-v1` pripravená, watchdog ju ignorovať nebude — pustí sa hneď po pushu vetky.
