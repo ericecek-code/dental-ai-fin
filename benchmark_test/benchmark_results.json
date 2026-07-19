@@ -1,0 +1,612 @@
+[
+  {
+    "image": "caries_000.jpg",
+    "gt_count": 0,
+    "gt_classes": [],
+    "yolo_count": 44,
+    "yolo_classes": [
+      "caries",
+      "missing_teeth",
+      "root_piece",
+      "unknown"
+    ],
+    "yolo_found": [],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "caries",
+      "missing_teeth",
+      "root_piece",
+      "unknown"
+    ],
+    "gemini_count": 7,
+    "gemini_classes": [
+      "caries",
+      "missing_teeth",
+      "periapical_lesion",
+      "periodontal_disease",
+      "retained_root_fragment",
+      "tmj_pathology"
+    ],
+    "gemini_found": [],
+    "gemini_missed": [],
+    "gemini_extra": [
+      "caries",
+      "missing_teeth",
+      "periapical_lesion",
+      "periodontal_disease",
+      "retained_root_fragment",
+      "tmj_pathology"
+    ]
+  },
+  {
+    "image": "caries_001.jpg",
+    "gt_count": 0,
+    "gt_classes": [],
+    "yolo_count": 36,
+    "yolo_classes": [
+      "caries",
+      "crown",
+      "filling",
+      "missing_teeth",
+      "root_canal_treatment",
+      "unknown"
+    ],
+    "yolo_found": [],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "caries",
+      "crown",
+      "filling",
+      "missing_teeth",
+      "root_canal_treatment",
+      "unknown"
+    ],
+    "gemini_count": 7,
+    "gemini_classes": [
+      "defective_restoration",
+      "elongated_styloid_process",
+      "impacted_tooth",
+      "missing_tooth",
+      "periapical_lesion"
+    ],
+    "gemini_found": [],
+    "gemini_missed": [],
+    "gemini_extra": [
+      "defective_restoration",
+      "elongated_styloid_process",
+      "impacted_tooth",
+      "missing_tooth",
+      "periapical_lesion"
+    ]
+  },
+  {
+    "image": "caries_002.jpg",
+    "gt_count": 0,
+    "gt_classes": [],
+    "yolo_count": 28,
+    "yolo_classes": [
+      "caries",
+      "crown",
+      "filling",
+      "missing_teeth",
+      "root_canal_treatment",
+      "unknown"
+    ],
+    "yolo_found": [],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "caries",
+      "crown",
+      "filling",
+      "missing_teeth",
+      "root_canal_treatment",
+      "unknown"
+    ],
+    "gemini_count": 6,
+    "gemini_classes": [
+      "incidental_finding",
+      "missing_teeth",
+      "missing_tooth",
+      "restoration"
+    ],
+    "gemini_found": [],
+    "gemini_missed": [],
+    "gemini_extra": [
+      "incidental_finding",
+      "missing_teeth",
+      "missing_tooth",
+      "restoration"
+    ]
+  },
+  {
+    "image": "caries_003.jpg",
+    "gt_count": 0,
+    "gt_classes": [],
+    "yolo_count": 36,
+    "yolo_classes": [
+      "caries",
+      "crown",
+      "mandibular_canal",
+      "missing_teeth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "unknown"
+    ],
+    "yolo_found": [],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "caries",
+      "crown",
+      "mandibular_canal",
+      "missing_teeth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "unknown"
+    ],
+    "gemini_count": 6,
+    "gemini_classes": [
+      "anatomical_variation",
+      "caries",
+      "unerupted_tooth"
+    ],
+    "gemini_found": [],
+    "gemini_missed": [],
+    "gemini_extra": [
+      "anatomical_variation",
+      "caries",
+      "unerupted_tooth"
+    ]
+  },
+  {
+    "image": "caries_004.jpg",
+    "gt_count": 0,
+    "gt_classes": [],
+    "yolo_count": 8,
+    "yolo_classes": [
+      "caries",
+      "filling",
+      "impacted_tooth",
+      "missing_teeth",
+      "unknown"
+    ],
+    "yolo_found": [],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "caries",
+      "filling",
+      "impacted_tooth",
+      "missing_teeth",
+      "unknown"
+    ],
+    "gemini_count": 3,
+    "gemini_classes": [
+      "caries",
+      "retained_primary_tooth",
+      "unerupted_tooth"
+    ],
+    "gemini_found": [],
+    "gemini_missed": [],
+    "gemini_extra": [
+      "caries",
+      "retained_primary_tooth",
+      "unerupted_tooth"
+    ]
+  },
+  {
+    "image": "oral_005606.jpg",
+    "gt_count": 14,
+    "gt_classes": [
+      "caries",
+      "periapical_lesion"
+    ],
+    "yolo_count": 106,
+    "yolo_classes": [
+      "caries",
+      "filling",
+      "impacted_tooth",
+      "implant",
+      "missing_teeth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "root_piece",
+      "unknown"
+    ],
+    "yolo_found": [
+      "caries",
+      "periapical_lesion"
+    ],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "filling",
+      "impacted_tooth",
+      "implant",
+      "missing_teeth",
+      "root_canal_treatment",
+      "root_piece",
+      "unknown"
+    ],
+    "gemini_count": 6,
+    "gemini_classes": [
+      "bone_loss",
+      "caries",
+      "incidental_finding",
+      "missing_teeth",
+      "retained_root"
+    ],
+    "gemini_found": [
+      "caries"
+    ],
+    "gemini_missed": [
+      "periapical_lesion"
+    ],
+    "gemini_extra": [
+      "bone_loss",
+      "incidental_finding",
+      "missing_teeth",
+      "retained_root"
+    ]
+  },
+  {
+    "image": "oral_005607.jpg",
+    "gt_count": 3,
+    "gt_classes": [
+      "impacted_tooth",
+      "periapical_lesion"
+    ],
+    "yolo_count": 36,
+    "yolo_classes": [
+      "caries",
+      "crown",
+      "filling",
+      "impacted_tooth",
+      "missing_teeth",
+      "periapical_lesion",
+      "unknown"
+    ],
+    "yolo_found": [
+      "impacted_tooth",
+      "periapical_lesion"
+    ],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "caries",
+      "crown",
+      "filling",
+      "missing_teeth",
+      "unknown"
+    ],
+    "gemini_count": 5,
+    "gemini_classes": [
+      "caries",
+      "impacted_tooth",
+      "missing_tooth"
+    ],
+    "gemini_found": [
+      "impacted_tooth"
+    ],
+    "gemini_missed": [
+      "periapical_lesion"
+    ],
+    "gemini_extra": [
+      "caries",
+      "missing_tooth"
+    ]
+  },
+  {
+    "image": "oral_005608.jpg",
+    "gt_count": 10,
+    "gt_classes": [
+      "caries",
+      "impacted_tooth",
+      "periapical_lesion"
+    ],
+    "yolo_count": 40,
+    "yolo_classes": [
+      "caries",
+      "crown",
+      "filling",
+      "periapical_lesion",
+      "root_piece",
+      "unknown"
+    ],
+    "yolo_found": [
+      "caries",
+      "periapical_lesion"
+    ],
+    "yolo_missed": [
+      "impacted_tooth"
+    ],
+    "yolo_extra": [
+      "crown",
+      "filling",
+      "root_piece",
+      "unknown"
+    ],
+    "gemini_count": 7,
+    "gemini_classes": [
+      "caries",
+      "impacted_tooth",
+      "restoration"
+    ],
+    "gemini_found": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "gemini_missed": [
+      "periapical_lesion"
+    ],
+    "gemini_extra": [
+      "restoration"
+    ]
+  },
+  {
+    "image": "oral_005609.jpg",
+    "gt_count": 5,
+    "gt_classes": [
+      "caries",
+      "impacted_tooth",
+      "periapical_lesion"
+    ],
+    "yolo_count": 17,
+    "yolo_classes": [
+      "caries",
+      "filling",
+      "impacted_tooth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "root_piece",
+      "unknown"
+    ],
+    "yolo_found": [
+      "caries",
+      "impacted_tooth",
+      "periapical_lesion"
+    ],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "filling",
+      "root_canal_treatment",
+      "root_piece",
+      "unknown"
+    ],
+    "gemini_count": 0,
+    "gemini_classes": [],
+    "gemini_found": [],
+    "gemini_missed": [
+      "caries",
+      "impacted_tooth",
+      "periapical_lesion"
+    ],
+    "gemini_extra": []
+  },
+  {
+    "image": "oral_005610.jpg",
+    "gt_count": 6,
+    "gt_classes": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "yolo_count": 58,
+    "yolo_classes": [
+      "caries",
+      "crown",
+      "filling",
+      "implant",
+      "missing_teeth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "unknown"
+    ],
+    "yolo_found": [
+      "caries"
+    ],
+    "yolo_missed": [
+      "impacted_tooth"
+    ],
+    "yolo_extra": [
+      "crown",
+      "filling",
+      "implant",
+      "missing_teeth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "unknown"
+    ],
+    "gemini_count": 0,
+    "gemini_classes": [],
+    "gemini_found": [],
+    "gemini_missed": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "gemini_extra": []
+  },
+  {
+    "image": "oral_005611.jpg",
+    "gt_count": 3,
+    "gt_classes": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "yolo_count": 58,
+    "yolo_classes": [
+      "caries",
+      "crown",
+      "filling",
+      "impacted_tooth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "unknown"
+    ],
+    "yolo_found": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "crown",
+      "filling",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "unknown"
+    ],
+    "gemini_count": 0,
+    "gemini_classes": [],
+    "gemini_found": [],
+    "gemini_missed": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "gemini_extra": []
+  },
+  {
+    "image": "oral_005612.jpg",
+    "gt_count": 5,
+    "gt_classes": [
+      "caries",
+      "impacted_tooth",
+      "periapical_lesion"
+    ],
+    "yolo_count": 53,
+    "yolo_classes": [
+      "caries",
+      "crown",
+      "filling",
+      "impacted_tooth",
+      "missing_teeth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "root_piece",
+      "unknown"
+    ],
+    "yolo_found": [
+      "caries",
+      "impacted_tooth",
+      "periapical_lesion"
+    ],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "crown",
+      "filling",
+      "missing_teeth",
+      "root_canal_treatment",
+      "root_piece",
+      "unknown"
+    ],
+    "gemini_count": 0,
+    "gemini_classes": [],
+    "gemini_found": [],
+    "gemini_missed": [
+      "caries",
+      "impacted_tooth",
+      "periapical_lesion"
+    ],
+    "gemini_extra": []
+  },
+  {
+    "image": "oral_005613.jpg",
+    "gt_count": 4,
+    "gt_classes": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "yolo_count": 44,
+    "yolo_classes": [
+      "caries",
+      "filling",
+      "impacted_tooth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "root_piece",
+      "unknown"
+    ],
+    "yolo_found": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "filling",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "root_piece",
+      "unknown"
+    ],
+    "gemini_count": 0,
+    "gemini_classes": [],
+    "gemini_found": [],
+    "gemini_missed": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "gemini_extra": []
+  },
+  {
+    "image": "oral_005614.jpg",
+    "gt_count": 4,
+    "gt_classes": [
+      "impacted_tooth"
+    ],
+    "yolo_count": 14,
+    "yolo_classes": [
+      "filling",
+      "impacted_tooth",
+      "unknown"
+    ],
+    "yolo_found": [
+      "impacted_tooth"
+    ],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "filling",
+      "unknown"
+    ],
+    "gemini_count": 0,
+    "gemini_classes": [],
+    "gemini_found": [],
+    "gemini_missed": [
+      "impacted_tooth"
+    ],
+    "gemini_extra": []
+  },
+  {
+    "image": "oral_005616.jpg",
+    "gt_count": 3,
+    "gt_classes": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "yolo_count": 55,
+    "yolo_classes": [
+      "caries",
+      "filling",
+      "impacted_tooth",
+      "missing_teeth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "root_piece",
+      "unknown"
+    ],
+    "yolo_found": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "yolo_missed": [],
+    "yolo_extra": [
+      "filling",
+      "missing_teeth",
+      "periapical_lesion",
+      "root_canal_treatment",
+      "root_piece",
+      "unknown"
+    ],
+    "gemini_count": 0,
+    "gemini_classes": [],
+    "gemini_found": [],
+    "gemini_missed": [
+      "caries",
+      "impacted_tooth"
+    ],
+    "gemini_extra": []
+  }
+]

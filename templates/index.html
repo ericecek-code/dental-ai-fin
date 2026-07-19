@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental X-ray Enhancement and Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --primary-dark: #0b5ed7;
+            --secondary: #6c757d;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #198754;
+            --info: #0dcaf0;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --white: #ffffff;
+            --border-radius: 10px;
+            --box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            background-color: #f0f5ff;
+            font-family: 'Poppins', sans-serif;
+            padding: 20px;
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            position: relative;
+        }
+        
+        .page-header h1 {
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .page-header p {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .page-header::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--info));
+            border-radius: 2px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            overflow: hidden;
+            height: 100%;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        
+        .upload-section {
+            background-color: var(--white);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--info));
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            border: none;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.25);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(13, 110, 253, 0.35);
+        }
+        
+        .btn-success {
+            background: linear-gradient(to right, var(--success), #0f5132);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(25, 135, 84, 0.25);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(25, 135, 84, 0.35);
+        }
+        
+        .image-container {
+            background-color: var(--white);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+            text-align: center;
+            height: 100%;
+            transition: var(--transition);
+        }
+        
+        .image-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-top: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: var(--transition);
+        }
+        
+        .image-preview:hover {
+            transform: scale(1.02);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+            padding: 30px;
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: var(--primary);
+        }
+        
+        /* Advanced loader styles */
+        .loader-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+        }
+        
+        .dental-loader {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+        
+        .dental-loader-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top-color: var(--primary);
+            animation: spin 2s linear infinite;
+        }
+        
+        .dental-loader-circle:nth-child(2) {
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            border-top-color: var(--info);
+            animation: spin 3s linear infinite;
+        }
+        
+        .dental-loader-circle:nth-child(3) {
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+            border-top-color: var(--success);
+            animation: spin 1.5s linear infinite;
+        }
+        
+        .dental-loader-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: var(--primary);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.5;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.5;
+            }
+        }
+        
+        .progress-container {
+            width: 100%;
+            max-width: 300px;
+            margin: 20px auto;
+            background-color: #e9ecef;
+            border-radius: 30px;
+            height: 8px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, var(--primary), var(--info));
+            border-radius: 30px;
+            transition: width 0.5s ease;
+            animation: progress-animation 2s infinite;
+        }
+        
+        @keyframes progress-animation {
+            0% {
+                width: 10%;
+            }
+            50% {
+                width: 70%;
+            }
+            100% {
+                width: 10%;
+            }
+        }
+        
+        .loader-text {
+            margin-top: 15px;
+            font-weight: 500;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+        
+        .loader-steps {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        
+        .loader-step {
+            margin: 0 15px;
+            position: relative;
+            padding-bottom: 20px;
+        }
+        
+        .loader-step-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            color: var(--secondary);
+            line-height: 40px;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .loader-step.active .loader-step-icon {
+            background: linear-gradient(to right, var(--primary), var(--info));
+            color: white;
+            box-shadow: 0 0 15px rgba(13, 110, 253, 0.5);
+        }
+        
+        .loader-step-text {
+            font-size: 0.85rem;
+            color: var(--secondary);
+        }
+        
+        .loader-step.active .loader-step-text {
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .results-heading {
+            text-align: center;
+            margin: 40px 0 30px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            position: relative;
+            padding-bottom: 15px;
+            display: none;
+        }
+        
+        .results-heading::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary), var(--info));
+            border-radius: 2px;
+        }
+        
+        .image-label {
+            background: linear-gradient(to right, var(--primary), var(--info));
+            color: var(--white);
+            padding: 8px 20px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-weight: 500;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+        
+        .download-link {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+        }
+        
+        .workflow-steps {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0 40px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .workflow-steps::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 2px;
+            background-color: #e9ecef;
+            z-index: -1;
+        }
+        
+        .step {
+            background-color: #e9ecef;
+            padding: 15px 25px;
+            border-radius: 30px;
+            margin: 0 15px;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+            transition: var(--transition);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .step i {
+            font-size: 1.1rem;
+        }
+        
+        .step.active {
+            background: linear-gradient(to right, var(--primary), var(--info));
+            color: var(--white);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+        }
+        
+        .step.active:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(13, 110, 253, 0.4);
+        }
+        
+        .features-info {
+            background-color: #fff8e1;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            border-left: 5px solid var(--warning);
+            box-shadow: var(--box-shadow);
+            position: relative;
+            padding-left: 50px;
+        }
+        
+        .features-info::before {
+            content: "\f071";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: var(--warning);
+        }
+        
+        /* Dental Theme Elements */
+        .dental-icon {
+            display: inline-block;
+            margin-right: 10px;
+            color: var(--primary);
+            font-size: 1.8rem;
+            vertical-align: middle;
+        }
+        
+        .upload-box {
+            border: 2px dashed #ced4da;
+            padding: 30px;
+            text-align: center;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .upload-box:hover {
+            border-color: var(--primary);
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            transition: var(--transition);
+        }
+        
+        .upload-box:hover .upload-icon {
+            transform: translateY(-5px);
+        }
+        
+        .hidden-input {
+            display: none;
+        }
+        
+        .empty-state {
+            padding: 30px;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(to right, var(--danger), #b02a37);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.25);
+            margin-top: 15px;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(220, 53, 69, 0.35);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if yolo_available %}
+        <input type="hidden" id="yoloAvailable" value="true">
+        {% endif %}
+        
+        <div class="page-header">
+            <h1><i class="fas fa-tooth dental-icon"></i>Dental X-ray Enhancement and Detection</h1>
+            <p>Upload your dental X-ray images for AI-powered enhancement and automatic feature detection</p>
+        </div>
+        
+        {% if not yolo_available %}
+        <div class="features-info">
+            <p class="mb-0"><strong>Note:</strong> YOLOv8 object detection is not available. To enable dental object detection, please install the required package:</p>
+            <code>pip install ultralytics</code>
+        </div>
+        {% endif %}
+
+        <div class="upload-section" id="uploadSection">
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                <div class="mb-4">
+                    <label for="file" class="form-label">Select a dental X-ray image to enhance and analyze</label>
+                    <div class="upload-box" id="uploadBox">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h5>Drag & drop your image here</h5>
+                        <p class="text-muted">or click to browse files</p>
+                        <input class="hidden-input" type="file" id="file" name="file" accept=".jpg,.jpeg,.png">
+                    </div>
+                    <div id="fileInfo" class="mt-3 d-none">
+                        <div class="alert alert-info d-flex align-items-center">
+                            <i class="fas fa-file-image me-2"></i>
+                            <span id="fileName">No file selected</span>
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-auto" id="removeFile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="processId" name="processId" value="">
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg" id="processBtn" disabled>
+                        <i class="fas fa-magic me-2"></i>Process Image
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="loader-container">
+                <div class="dental-loader">
+                    <div class="dental-loader-circle"></div>
+                    <div class="dental-loader-circle"></div>
+                    <div class="dental-loader-circle"></div>
+                    <i class="fas fa-tooth dental-loader-icon"></i>
+                </div>
+            </div>
+            
+            <div class="loader-steps" id="loaderSteps">
+                <div class="loader-step active" id="step1">
+                    <div class="loader-step-icon">
+                        <i class="fas fa-upload"></i>
+                    </div>
+                    <div class="loader-step-text">Processing</div>
+                </div>
+                <div class="loader-step" id="step2">
+                    <div class="loader-step-icon">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div class="loader-step-text">Enhancing</div>
+                </div>
+                <div class="loader-step" id="step3">
+                    <div class="loader-step-icon">
+                        <i class="fas fa-magnifying-glass"></i>
+                    </div>
+                    <div class="loader-step-text">Detecting</div>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <p class="loader-text" id="loadingText">Processing your image...</p>
+            <p class="text-muted small">This may take a few moments</p>
+            
+            <button id="cancelBtn" class="btn btn-danger">
+                <i class="fas fa-times-circle me-1"></i>Cancel Process
+            </button>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if original_image %}
+        <h2 class="results-heading" id="resultsHeading" style="display: block;">Results</h2>
+        
+        <div class="workflow-steps">
+            <div class="step active">
+                <i class="fas fa-image"></i>1. Original
+            </div>
+            <div class="step active">
+                <i class="fas fa-wand-magic-sparkles"></i>2. Enhanced
+            </div>
+            {% if detected_image %}
+            <div class="step active">
+                <i class="fas fa-magnifying-glass-chart"></i>3. Detection
+            </div>
+            {% else %}
+            <div class="step">
+                <i class="fas fa-magnifying-glass-chart"></i>3. Detection
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="image-container">
+                        <span class="image-label"><i class="fas fa-image me-1"></i>Original Image</span>
+                        <img src="{{ original_image }}" class="image-preview" alt="Original Image">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="image-container">
+                        <span class="image-label"><i class="fas fa-wand-magic-sparkles me-1"></i>Enhanced Image</span>
+                        <img src="{{ enhanced_image }}" class="image-preview" alt="Enhanced Image">
+                        <a href="{{ enhanced_image }}" class="btn btn-success download-link" download>
+                            <i class="fas fa-download me-1"></i>Download Enhanced
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% if detected_image %}
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="image-container">
+                        <span class="image-label"><i class="fas fa-magnifying-glass-chart me-1"></i>Detection Results</span>
+                        <img src="{{ detected_image }}" class="image-preview" alt="Detection Results">
+                        <a href="{{ detected_image }}" class="btn btn-success download-link" download>
+                            <i class="fas fa-download me-1"></i>Download Results
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% elif yolo_available %}
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="empty-state">
+                        <i class="fas fa-tooth empty-state-icon"></i>
+                        <p>No dental features were detected in this image.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <div class="footer">
+            <p>Powered by Real-ESRGAN for image enhancement and YOLOv8 for object detection</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadBox = document.getElementById('uploadBox');
+            const fileInput = document.getElementById('file');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const removeFileBtn = document.getElementById('removeFile');
+            const processBtn = document.getElementById('processBtn');
+            const loadingDiv = document.getElementById('loading');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const processIdInput = document.getElementById('processId');
+            
+            // Generate a unique process ID for this session
+            const processId = generateUUID();
+            processIdInput.value = processId;
+            
+            // Function to generate UUID
+            function generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0,
+                          v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+            
+            // Handle upload box click
+            uploadBox.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // Handle drag and drop
+            uploadBox.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadBox.classList.add('border-primary');
+            });
+            
+            uploadBox.addEventListener('dragleave', function() {
+                uploadBox.classList.remove('border-primary');
+            });
+            
+            uploadBox.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadBox.classList.remove('border-primary');
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    updateFileInfo();
+                }
+            });
+            
+            // Handle file selection
+            fileInput.addEventListener('change', updateFileInfo);
+            
+            // Handle file removal
+            removeFileBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                fileInfo.classList.add('d-none');
+                processBtn.disabled = true;
+            });
+            
+            function updateFileInfo() {
+                if (fileInput.files.length) {
+                    fileName.textContent = fileInput.files[0].name;
+                    fileInfo.classList.remove('d-none');
+                    processBtn.disabled = false;
+                } else {
+                    fileInfo.classList.add('d-none');
+                    processBtn.disabled = true;
+                }
+            }
+            
+            // Enhanced loading animation
+            function simulateProcessingSteps() {
+                const step1 = document.getElementById('step1');
+                const step2 = document.getElementById('step2');
+                const step3 = document.getElementById('step3');
+                const loadingText = document.getElementById('loadingText');
+                
+                // Start with step 1
+                step1.classList.add('active');
+                
+                // After 2 seconds, move to step 2
+                setTimeout(() => {
+                    step1.classList.remove('active');
+                    step2.classList.add('active');
+                    loadingText.textContent = "Enhancing image...";
+                }, 2000);
+                
+                // After 5 seconds, move to step 3 if YOLOv8 is available
+                setTimeout(() => {
+                    if (document.body.classList.contains('yolo-available')) {
+                        step2.classList.remove('active');
+                        step3.classList.add('active');
+                        loadingText.textContent = "Detecting features...";
+                    }
+                }, 5000);
+            }
+            
+            // Form submission loading state
+            document.getElementById('uploadForm').addEventListener('submit', function() {
+                loadingDiv.style.display = 'block';
+                simulateProcessingSteps();
+            });
+            
+            // Add class to body if YOLOv8 is available
+            if (document.getElementById('yoloAvailable')) {
+                document.body.classList.add('yolo-available');
+            }
+            
+            // Cancel process button
+            cancelBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to cancel the processing?')) {
+                    // Send cancel request to the server
+                    fetch(`/cancel/${processId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Cancel response:', data);
+                        // Hide loading div
+                        loadingDiv.style.display = 'none';
+                        
+                        // Show feedback to user
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-info d-flex align-items-center';
+                        alertDiv.innerHTML = `
+                            <i class="fas fa-info-circle me-2"></i>
+                            Process cancelled. You can start a new upload.
+                        `;
+                        
+                        // Insert alert before the upload section
+                        const uploadSection = document.getElementById('uploadSection');
+                        uploadSection.parentNode.insertBefore(alertDiv, uploadSection);
+                        
+                        // Auto-remove alert after 5 seconds
+                        setTimeout(() => {
+                            alertDiv.remove();
+                        }, 5000);
+                    })
+                    .catch(error => {
+                        console.error('Error cancelling process:', error);
+                        
+                        // Fallback to page reload if API call fails
+                        window.location.reload();
+                    });
+                }
+            });
+            
+            // Scroll to results if present
+            if (document.getElementById('resultsHeading')) {
+                document.getElementById('resultsHeading').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

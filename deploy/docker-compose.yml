@@ -1,0 +1,38 @@
+# Docker Compose — pre lokálne testovanie production image
+#
+# Pouzitie:
+#   docker compose -f deploy/docker-compose.yml build
+#   docker compose -f deploy/docker-compose.yml up
+#
+# Sluzi na:
+#   - overit ze Dockerfile funguje (bez nutnosti deploy na cloud)
+#   - simulovat production prostredie s produkcnymi env-var
+#
+# Pre ciste deploy na cloud (RunPod/DO/Modal) container naplnis inak.
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: dentescope/backend:latest
+    container_name: dentescope-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env                    # vezme existujuci .env v projekte (ak ho mas)
+    environment:
+      # Ak nemas .env, tu su predvolene pre local test
+      LOG_LEVEL: INFO
+      UPLOAD_MAX_SIZE_MB: "50"
+      CORS_ORIGINS: '["http://localhost:5173","http://127.0.0.1:5173","http://localhost:3000"]'
+    volumes:
+      # Ak nechces vkladat 350MB model do image, mountni ho zvonka
+      - ../backend/weights:/app/weights:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s            # model sa nacitava pri starte

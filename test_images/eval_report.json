@@ -1,0 +1,346 @@
+{
+  "generated": "eval_distribution.py",
+  "weights": "C:\\Users\\PC1\\Desktop\\dental-ai\\backend\\weights\\yolov8x_dental.pt",
+  "images_tested": 36,
+  "total_detections": 3429,
+  "per_image": [
+    {
+      "image": "caries_1.jpg",
+      "detections": 162,
+      "max_conf": 0.8471032977104187
+    },
+    {
+      "image": "caries_2.jpg",
+      "detections": 155,
+      "max_conf": 0.8386483788490295
+    },
+    {
+      "image": "caries_3.jpg",
+      "detections": 175,
+      "max_conf": 0.8966866731643677
+    },
+    {
+      "image": "caries_4.jpg",
+      "detections": 148,
+      "max_conf": 0.9262245297431946
+    },
+    {
+      "image": "caries_5.jpg",
+      "detections": 106,
+      "max_conf": 0.8107990622520447
+    },
+    {
+      "image": "caries_6.jpg",
+      "detections": 54,
+      "max_conf": 0.49083396792411804
+    },
+    {
+      "image": "caries_7.jpg",
+      "detections": 125,
+      "max_conf": 0.9456385970115662
+    },
+    {
+      "image": "caries_8.jpg",
+      "detections": 81,
+      "max_conf": 0.8388485312461853
+    },
+    {
+      "image": "dental_sample.jpg",
+      "detections": 148,
+      "max_conf": 0.9262412786483765
+    },
+    {
+      "image": "sample1.jpg",
+      "detections": 126,
+      "max_conf": 0.8213698863983154
+    },
+    {
+      "image": "single_1.jpg",
+      "detections": 10,
+      "max_conf": 0.7012921571731567
+    },
+    {
+      "image": "single_2.jpg",
+      "detections": 26,
+      "max_conf": 0.7427393198013306
+    },
+    {
+      "image": "single_3.jpg",
+      "detections": 4,
+      "max_conf": 0.8071218729019165
+    },
+    {
+      "image": "single_4.jpg",
+      "detections": 8,
+      "max_conf": 0.8139632940292358
+    },
+    {
+      "image": "single_5.jpg",
+      "detections": 43,
+      "max_conf": 0.30094677209854126
+    },
+    {
+      "image": "overlay_caries_3.png",
+      "detections": 151,
+      "max_conf": 0.20057591795921326
+    },
+    {
+      "image": "overlay_demo.png",
+      "detections": 144,
+      "max_conf": 0.4031383991241455
+    },
+    {
+      "image": "overlay_latest.png",
+      "detections": 94,
+      "max_conf": 0.20010042190551758
+    },
+    {
+      "image": "overlay_t4.png",
+      "detections": 151,
+      "max_conf": 0.20057591795921326
+    },
+    {
+      "image": "rtg_with_boxes.png",
+      "detections": 79,
+      "max_conf": 0.5092888474464417
+    },
+    {
+      "image": "tooth_crop_top1.png",
+      "detections": 68,
+      "max_conf": 0.11363908648490906
+    },
+    {
+      "image": "caries_1.jpg",
+      "detections": 162,
+      "max_conf": 0.8471032977104187
+    },
+    {
+      "image": "caries_2.jpg",
+      "detections": 155,
+      "max_conf": 0.8386483788490295
+    },
+    {
+      "image": "caries_3.jpg",
+      "detections": 175,
+      "max_conf": 0.8966866731643677
+    },
+    {
+      "image": "caries_4.jpg",
+      "detections": 148,
+      "max_conf": 0.9262245297431946
+    },
+    {
+      "image": "caries_5.jpg",
+      "detections": 106,
+      "max_conf": 0.8107990622520447
+    },
+    {
+      "image": "caries_6.jpg",
+      "detections": 54,
+      "max_conf": 0.49083396792411804
+    },
+    {
+      "image": "caries_7.jpg",
+      "detections": 125,
+      "max_conf": 0.9456385970115662
+    },
+    {
+      "image": "caries_8.jpg",
+      "detections": 81,
+      "max_conf": 0.8388485312461853
+    },
+    {
+      "image": "dental_sample.jpg",
+      "detections": 148,
+      "max_conf": 0.9262412786483765
+    },
+    {
+      "image": "sample1.jpg",
+      "detections": 126,
+      "max_conf": 0.8213698863983154
+    },
+    {
+      "image": "single_1.jpg",
+      "detections": 10,
+      "max_conf": 0.7012921571731567
+    },
+    {
+      "image": "single_2.jpg",
+      "detections": 26,
+      "max_conf": 0.7427393198013306
+    },
+    {
+      "image": "single_3.jpg",
+      "detections": 4,
+      "max_conf": 0.8071218729019165
+    },
+    {
+      "image": "single_4.jpg",
+      "detections": 8,
+      "max_conf": 0.8139632940292358
+    },
+    {
+      "image": "single_5.jpg",
+      "detections": 43,
+      "max_conf": 0.30094677209854126
+    }
+  ],
+  "per_class": [
+    {
+      "class": "Crown",
+      "count": 679,
+      "avg_conf": 0.11610601516920574,
+      "max": 0.9262412786483765,
+      "p50": 0.031757913529872894,
+      "p90": 0.36597352027893076,
+      "std": 0.21532794492370777,
+      "below_50pct": 617,
+      "above_70pct": 46,
+      "above_85pct": 8
+    },
+    {
+      "class": "Caries",
+      "count": 581,
+      "avg_conf": 0.044208642167460795,
+      "max": 0.4339265823364258,
+      "p50": 0.023478034883737564,
+      "p90": 0.08876088261604309,
+      "std": 0.06004756086419105,
+      "below_50pct": 581,
+      "above_70pct": 0,
+      "above_85pct": 0
+    },
+    {
+      "class": "Filling",
+      "count": 572,
+      "avg_conf": 0.1770670278587255,
+      "max": 0.9456385970115662,
+      "p50": 0.04611819609999657,
+      "p90": 0.7324102282524106,
+      "std": 0.25692901022226117,
+      "below_50pct": 490,
+      "above_70pct": 64,
+      "above_85pct": 10
+    },
+    {
+      "class": "Periapical lesion",
+      "count": 509,
+      "avg_conf": 0.05724105486474302,
+      "max": 0.764182984828949,
+      "p50": 0.0227507371455431,
+      "p90": 0.12120665609836578,
+      "std": 0.10575591861553464,
+      "below_50pct": 501,
+      "above_70pct": 4,
+      "above_85pct": 0
+    },
+    {
+      "class": "Root Canal Treatment",
+      "count": 505,
+      "avg_conf": 0.15087335692110038,
+      "max": 0.8386483788490295,
+      "p50": 0.04674951732158661,
+      "p90": 0.45312491059303284,
+      "std": 0.19671927631400085,
+      "below_50pct": 461,
+      "above_70pct": 12,
+      "above_85pct": 0
+    },
+    {
+      "class": "Missing teeth",
+      "count": 222,
+      "avg_conf": 0.07029431431998943,
+      "max": 0.7802416086196899,
+      "p50": 0.02060807589441538,
+      "p90": 0.1547289937734604,
+      "std": 0.14175923716149993,
+      "below_50pct": 210,
+      "above_70pct": 4,
+      "above_85pct": 0
+    },
+    {
+      "class": "Implant",
+      "count": 129,
+      "avg_conf": 0.08252812637550425,
+      "max": 0.8388485312461853,
+      "p50": 0.021011516451835632,
+      "p90": 0.18826311826705933,
+      "std": 0.17615178268351667,
+      "below_50pct": 123,
+      "above_70pct": 6,
+      "above_85pct": 0
+    },
+    {
+      "class": "Unknown",
+      "count": 81,
+      "avg_conf": 0.02311610966276975,
+      "max": 0.09570594877004623,
+      "p50": 0.01653151772916317,
+      "p90": 0.048156481236219406,
+      "std": 0.016595158196970376,
+      "below_50pct": 81,
+      "above_70pct": 0,
+      "above_85pct": 0
+    },
+    {
+      "class": "Root Piece",
+      "count": 65,
+      "avg_conf": 0.12535617085030445,
+      "max": 0.7880657315254211,
+      "p50": 0.022873928770422935,
+      "p90": 0.3761884272098541,
+      "std": 0.1968615581379581,
+      "below_50pct": 59,
+      "above_70pct": 2,
+      "above_85pct": 0
+    },
+    {
+      "class": "Impacted tooth",
+      "count": 54,
+      "avg_conf": 0.2932335350110575,
+      "max": 0.8139632940292358,
+      "p50": 0.15257878601551056,
+      "p90": 0.798262643814087,
+      "std": 0.3062635772281449,
+      "below_50pct": 40,
+      "above_70pct": 12,
+      "above_85pct": 0
+    },
+    {
+      "class": "Mandibular Canal",
+      "count": 28,
+      "avg_conf": 0.032134277845865915,
+      "max": 0.2608831226825714,
+      "p50": 0.01710349600762129,
+      "p90": 0.05789289847016338,
+      "std": 0.04843398749470761,
+      "below_50pct": 28,
+      "above_70pct": 0,
+      "above_85pct": 0
+    },
+    {
+      "class": "Retained root",
+      "count": 2,
+      "avg_conf": 0.011648964136838913,
+      "max": 0.011648964136838913,
+      "p50": 0.011648964136838913,
+      "p90": 0.011648964136838913,
+      "std": 0.0,
+      "below_50pct": 2,
+      "above_70pct": 0,
+      "above_85pct": 0
+    },
+    {
+      "class": "Wire",
+      "count": 2,
+      "avg_conf": 0.032563235610723495,
+      "max": 0.053300902247428894,
+      "p50": 0.032563235610723495,
+      "p90": 0.049153368920087814,
+      "std": 0.0207376666367054,
+      "below_50pct": 2,
+      "above_70pct": 0,
+      "above_85pct": 0
+    }
+  ]
+}
