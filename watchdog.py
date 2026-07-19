@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Dental AI - Hermes/Kilo collaboration watchdog.
 
-Polls the local repo for remote changes every N seconds and reacts
+Polls the remote repo for new branches + status changes and reacts
 to phase transitions defined in ``status.yaml`` without user intervention.
 """
 
@@ -14,11 +14,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent
 STATUS_FILE = REPO_ROOT / "status.yaml"
 MESSAGES_FILE = REPO_ROOT / "messages.md"
 REMOTE = "ericecek"
-POLL_INTERVAL = 300  # 5 minutes
+POLL_INTERVAL = 180  # 3 minutes
+TRIGGER_BRANCH = "improve-precision-v1"
 
 
 def log(msg: str) -> None:
@@ -48,30 +49,30 @@ def git_fetch() -> bool:
     return True
 
 
-def remote_head() -> str | None:
-    out = sh(["git", "rev-parse", f"{REMOTE}/main"])
+def branch_exists_on_remote(name: str) -> bool:
+    out = sh(["git", "ls-remote", "--heads", REMOTE, name])
+    return bool(out)
+
+
+def current_branch() -> str | None:
+    out = sh(["git", "rev-parse", "--abbrev-ref", "HEAD"])
     return out or None
 
 
-def local_head() -> str | None:
-    out = sh(["git", "rev-parse", "HEAD"])
-    return out or None
+def switch_branch(name: str) -> bool:
+    cur = current_branch()
+    if cur == name:
+        return True
+    out = sh(["git", "checkout", name])
+    return "error" not in out.lower() and "fatal" not in out.lower()
 
 
-def needs_pull() -> bool:
-    r = remote_head()
-    l = local_head()
-    if not r or not l:
-        return False
-    return r != l
-
-
-def pull_rebase() -> bool:
+def pull_rebase(branch: str = "main") -> bool:
     fetch_ok = git_fetch()
     if not fetch_ok:
         log("Fetch failed; skipping pull.")
         return False
-    out = sh(["git", "pull", "--rebase", REMOTE, "main"])
+    out = sh(["git", "pull", "--rebase", REMOTE, branch])
     if "CONFLICT" in out or "error" in out.lower():
         log("Rebase conflict or error; aborting safely.")
         sh(["git", "rebase", "--abort"])
@@ -122,7 +123,7 @@ def commit_and_push(files: list[str], message: str) -> bool:
         return True
     if "error" in out.lower():
         return False
-    out = sh(["git", "push", REMOTE, "main"])
+    out = sh(["git", "push", REMOTE, current_branch() or "main"])
     return "error" not in out.lower() and "fatal" not in out.lower()
 
 
@@ -140,9 +141,9 @@ def run_setup() -> bool:
     )
     log(f"setup rc={result.returncode}")
     if result.stdout:
-        log(result.stdout[:1000])
+        log(result.stdout[:1200])
     if result.returncode != 0:
-        log(result.stderr[-1000:] if result.stderr else "")
+        log(result.stderr[-1200:] if result.stderr else "")
     return result.returncode == 0
 
 
@@ -152,7 +153,6 @@ def run_training(model: str = "yolov8") -> bool:
         log(f"{script} missing.")
         return False
     log(f"Starting training: {script}")
-    # long running: we won't block watchdog forever; spawn with nohup-like behavior via this script
     log_file = REPO_ROOT / "logs" / f"{script.stem}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}.log"
     log_file.parent.mkdir(parents=True, exist_ok=True)
     proc = subprocess.Popen(
@@ -163,7 +163,6 @@ def run_training(model: str = "yolov8") -> bool:
         text=True,
     )
     log(f"Training PID={proc.pid} logs={log_file}")
-    # update status
     status = read_status()
     status.update(
         {
@@ -193,7 +192,7 @@ def run_benchmark_comparison() -> bool:
     )
     log(f"benchmark rc={result.returncode}")
     out = (result.stdout or "") + (result.stderr or "")
-    log(out[:2000])
+    log(out[:4000])
     return result.returncode == 0
 
 
@@ -230,7 +229,6 @@ def detect_training_completion_from_log() -> bool:
 def handle_phase(status: dict) -> None:
     phase = str(status.get("current_phase", "")).lower().strip()
     agent = str(status.get("agent", "")).lower().strip()
-    # Only react to phases meant for Hermes or ambiguous
     if agent not in {"", "hermes"}:
         return
 
@@ -266,7 +264,6 @@ def handle_phase(status: dict) -> None:
 
 
 def sync_local_yaml_if_missing() -> None:
-    # Ensure local helper files exist even if Kilo forgot to push them yet.
     if not STATUS_FILE.exists():
         write_status(
             {
@@ -285,19 +282,44 @@ def main() -> None:
     log("Watchdog starting.")
     REPO_ROOT.mkdir(parents=True, exist_ok=True)
     sync_local_yaml_if_missing()
-    last_seen = local_head() or ""
+
+    boot_checked_trigger = False
+    last_main_sha = sh(["git", "rev-parse", "HEAD"]) or ""
 
     while True:
         try:
-            if needs_pull():
-                log("Remote changed; pulling ...")
-                if pull_rebase():
-                    log("Pull OK.")
-                    status = read_status()
-                    new_sha = local_head() or last_seen
-                    if new_sha != last_seen:
-                        last_seen = new_sha
+            fetch_ok = git_fetch()
+
+            # Always watch for the trigger branch first.
+            if not boot_checked_trigger and branch_exists_on_remote(TRIGGER_BRANCH):
+                log(f"Trigger branch `{TRIGGER_BRANCH}` detected.")
+                if switch_branch(TRIGGER_BRANCH):
+                    if pull_rebase(TRIGGER_BRANCH):
+                        append_message(f"Hermes: Found `{TRIGGER_BRANCH}`, switching and syncing.")
+                        status = read_status()
+                        status["current_phase"] = "phase2_local_training"
+                        status["status"] = "pending"
+                        status["last_update"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+                        status["agent"] = "Hermes"
+                        status["message"] = f"Switched to `{TRIGGER_BRANCH}`."
+                        write_status(status)
+                        commit_and_push(["status.yaml", "messages.md"], f"chore: switch to {TRIGGER_BRANCH}")
                         handle_phase(status)
+                boot_checked_trigger = True
+
+            # Also react to any main update.
+            cur_main = sh(["git", "rev-parse", "ericecek/main"]) or ""
+            local_sha = sh(["git", "rev-parse", "HEAD"]) or ""
+            if fetch_ok and cur_main and cur_main != last_main_sha:
+                log("main changed; pulling ...")
+                if pull_rebase("main"):
+                    log("main pulled.")
+                    last_main_sha = cur_main
+                    status = read_status()
+                    new_sha = sh(["git", "rev-parse", "HEAD"]) or last_main_sha
+                    if new_sha != local_sha:
+                        handle_phase(status)
+
             time.sleep(POLL_INTERVAL)
         except KeyboardInterrupt:
             log("Watchdog interrupted; exiting.")
