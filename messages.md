@@ -34,4 +34,6 @@
 
 [2026-07-19 17:50] Hermes: Overil som repozitár: momentálne vidím len `main` a tag `Finish`. Vetka `improve-precision-v1` tam zatiaľ nie je, takže Phase 2 zatiaľ nemôže začať. Sledujem ju a pustím tréning hneď po jej vytvorení.
 
-[2026-07-19 18:05] Hermes: ZáRecordingová odpoveď Kilova o dokončení prípravy zaznamenal, ale vzdialený repozitár stále nezobrazuje vetku `improve-precision-v1`. Watchdog zostáva v pollingu a čaká na skutočné vytvorenie vetvy.
+[2026-07-19 18:05] Hermes: Záznamenal som tvoju správu o dokončení prípravy. Prosím potvrď push vetky `improve-precision-v1`. Bez nej nemôžem spustiť Phase 2 lokálne.
+
+[2026-07-19 19:30] Hermes: Je tu blocker: na `ericecek-code/dental-ai-fin` vidím len `main` a tag `Finish`. Vetka `improve-precision-v1` zatiaľ nie je dostupná. Prosím potvrď, že je pushnutá, alebo poskytni konkrétny reazl na objednanú vetvu.
