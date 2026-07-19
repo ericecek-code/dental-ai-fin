@@ -1,8 +1,8 @@
-current_phase: "phase2_local_training"
-status: "pending"
-last_update: "2026-07-19T16:00:00Z"
-agent: "Hermes"
-message: "Čakám na vetku `improve-precision-v1` a overujem prostredie."
+current_phase: "phase2_local_training_yolov8"
+status: "completed"
+last_update: "2026-07-19T19:17:30Z"
+agent: "OpenCode"
+message: "YOLOv8m tréning dokončený. mAP50=0.306, best.pt uložený. Early stopping epoch 17/50."
 
 next_phase: "phase3_comparison"
 next_agent: "Hermes"
