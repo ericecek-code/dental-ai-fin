@@ -16,7 +16,7 @@ tags:
 
 # 🦷 Dental AI
 
-**AI-powered dental X-ray analysis — detect 19 conditions with color-coded overlays.**
+**AI-powered dental X-ray analysis — detect dental conditions with color-coded overlays, measurements, and professional PDF reports.**
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-311/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -29,7 +29,7 @@ tags:
 
 ## 📋 Overview
 
-Dental AI is an end-to-end dental X-ray analysis platform that leverages YOLOv8 deep learning models to automatically detect and classify dental conditions from intraoral radiographs. The system provides real-time detection with color-coded overlays, interactive image viewing, PDF report generation, and Grad-CAM explainability.
+Dental AI is an end-to-end dental X-ray analysis platform that leverages YOLOv8 deep learning models to automatically detect and classify dental conditions from panoramic radiographs. The system provides real-time detection with color-coded overlays, interactive image viewing, **millimeter measurements**, PDF report generation, and Grad-CAM explainability — all with **Slovak localization** for clinical workflow.
 
 **Live Demo:** [HuggingFace Spaces — Ericecek/dental-ai](https://huggingface.co/spaces/Ericecek/dental-ai)
 
@@ -37,15 +37,17 @@ Dental AI is an end-to-end dental X-ray analysis platform that leverages YOLOv8 
 
 ## ✨ Features
 
-- **19 Dental Conditions Detected** — Caries, Deep Caries, Crown, Implant, Malaligned, Mandibular Canal, Missing Teeth, Periapical Lesion, Retained Root, Root Canal Treatment, Root Piece, Impacted Tooth, Filling, Plating, Wire, Cyst, Root Resorption, Primary Teeth
-- **Color-Coded Overlays** — Each condition rendered with a distinct color for instant visual identification
-- **Interactive Canvas Viewer** — Zoom (mouse wheel), pan (drag), and fullscreen lightbox with keyboard shortcuts
-- **PDF Reports** — Clinical-grade reports with Slovak localization and severity triage (urgent / treat soon / watch)
+- **4 Key Diagnoses Detected** — Impacted, Caries, Periapical Lesion, Deep Caries (trained on DENTEX dataset)
+- **Color-Coded Overlays** — Each condition rendered with distinct color + severity (urgent / treat soon / watch)
+- **Interactive Canvas Viewer** — Zoom (mouse wheel), pan (drag), fullscreen, CLAHE/pseudocolor/heatmap modes
+- **Millimeter Measurements** — CEJ-to-bone-crest periodontal measurements per tooth
+- **PDF Reports** — Clinical-grade reports with Slovak localization, severity triage, measurements, and recommendations
 - **Grad-CAM Explainability** — Heatmaps showing which regions influenced the model's decisions
-- **Gemini Vision Integration** — AI-powered natural language description of detected findings
-- **Real-Time Analysis** — WebSocket-based progress tracking during inference
+- **Health Score Gauge** — Visual 0-100 dental health score based on findings
+- **Odontogram** — FDI notation (11-48) with color-coded tooth status
+- **Confidence Threshold Control** — Adjustable sensitivity slider (0.01–0.95)
+- **WebSocket Progress** — Real-time analysis progress tracking
 - **DICOM Support** — Read standard medical imaging format files
-- **Confidence Threshold Control** — Adjustable sensitivity slider (0.01–0.95) to balance recall vs. precision
 
 ---
 
@@ -54,10 +56,9 @@ Dental AI is an end-to-end dental X-ray analysis platform that leverages YOLOv8 
 ### Docker (Recommended)
 
 ```bash
-# Build and run the backend
+# Build and run
 cd dental-ai
-docker build -t dental-ai .
-docker run -p 7860:7860 dental-ai
+docker compose up --build
 ```
 
 Open `http://localhost:7860` in your browser.
@@ -105,7 +106,7 @@ Open `http://localhost:5173` — the React app proxies API calls to the backend 
 │  Vite + TypeScript + Tailwind CSS + Canvas Overlay          │
 │  ┌─────────────┐ ┌──────────────┐ ┌──────────────────────┐ │
 │  │ X-ray Viewer │ │ Upload Zone  │ │ Detection Cards      │ │
-│  │ (zoom/pan)   │ │              │ │ (color-coded)        │ │
+│  │ (zoom/pan)   │ │ + Measurements│ │ (color-coded)       │ │
 │  └─────────────┘ └──────────────┘ └──────────────────────┘ │
 │                         │  HTTP / WebSocket                 │
 ├─────────────────────────┼───────────────────────────────────┤
@@ -118,12 +119,12 @@ Open `http://localhost:5173` — the React app proxies API calls to the backend 
 │  ┌────▼──────────────▼──────────────────────────────────┐  │
 │  │                    ML Pipeline                        │  │
 │  │  Preprocessor → YOLOv8 Detector → Postprocessor      │  │
-│  │  (CLAHE)       (19 classes)      (severity/overlay)  │  │
+│  │  (CLAHE)       (4 classes)      (severity/overlay)   │  │
 │  └──────────────────────────────────────────────────────┘  │
 │                                                             │
 │  ┌──────────────┐ ┌──────────────┐ ┌────────────────────┐ │
-│  │ Grad-CAM     │ │ PDF Reporter │ │ Gemini Vision      │ │
-│  │ (explain)    │ │ (Slovak)     │ │ (AI description)   │ │
+│  │ Grad-CAM     │ │ PDF Reporter │ │ Measurements       │ │
+│  │ (explain)    │ │ (Slovak)     │ │ (CEJ-Bone Crest)   │ │
 │  └──────────────┘ └──────────────┘ └────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -134,12 +135,12 @@ Open `http://localhost:5173` — the React app proxies API calls to the backend 
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| **ML Model** | YOLOv8x (Ultralytics) | Object detection — 19 dental conditions |
+| **ML Model** | YOLOv8x (Ultralytics) | Object detection — 4 dental diagnoses |
 | **Backend** | Python 3.11 + FastAPI | REST API, WebSocket, file handling |
 | **Preprocessing** | OpenCV (CLAHE, denoising) | Image enhancement before inference |
 | **Explainability** | Grad-CAM | Visual heatmaps of model attention |
 | **Reports** | ReportLab | PDF generation with Slovak labels |
-| **Vision AI** | Google Gemini | Natural language analysis of findings |
+| **Measurements** | Custom mm-calibration | CEJ-to-bone-crest periodontal distances |
 | **Frontend** | React 18 + TypeScript | SPA with interactive X-ray viewer |
 | **Build Tool** | Vite | Fast dev server + bundling |
 | **Styling** | Tailwind CSS | Utility-first responsive UI |
@@ -151,11 +152,12 @@ Open `http://localhost:5173` — the React app proxies API calls to the backend 
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/analyze/` | Upload X-ray image for analysis. Accepts `multipart/form-data` with optional `?conf=` threshold (default: 0.01). Returns detections, class breakdown, and job ID. |
+| `POST` | `/analyze/` | Upload X-ray image for analysis. Accepts `multipart/form-data` with optional `?conf=` threshold (default: 0.05). Returns detections, class breakdown, and job ID. |
 | `GET` | `/results/{job_id}` | Retrieve full detection results for a completed analysis. |
 | `GET` | `/results/{job_id}/overlay` | Download the annotated X-ray PNG with color-coded bounding boxes. |
 | `GET` | `/results/{job_id}/report` | Generate a PDF report grouping findings by severity. |
-| `GET` | `/health` | Health check — returns `{"status": "healthy"}`. |
+| `GET` | `/results/{job_id}/measurements` | Retrieve CEJ-to-bone-crest measurements in mm. |
+| `GET` | `/health` | Health check — returns `{"status": "healthy", "model_loaded": true}`. |
 | `WS` | `/ws/status/{job_id}` | WebSocket stream for real-time analysis progress. |
 
 ### Example Request
@@ -173,11 +175,12 @@ curl -X POST "http://localhost:8000/analyze/?conf=0.05" \
   "status": "completed",
   "filename": "dental_xray.jpg",
   "conf_threshold": 0.05,
-  "detection_count": 42,
+  "detection_count": 12,
   "by_class": {
-    "Caries": { "count": 8, "max_conf": 0.78 },
-    "Filling": { "count": 5, "max_conf": 0.92 },
-    "Crown": { "count": 3, "max_conf": 0.88 }
+    "Caries": { "count": 5, "max_conf": 0.78, "severity": "urgent" },
+    "Deep Caries": { "count": 2, "max_conf": 0.85, "severity": "urgent" },
+    "Periapical Lesion": { "count": 3, "max_conf": 0.72, "severity": "treat_soon" },
+    "Impacted": { "count": 2, "max_conf": 0.65, "severity": "watch" }
   },
   "detections": [
     {
@@ -185,7 +188,16 @@ curl -X POST "http://localhost:8000/analyze/?conf=0.05" \
       "confidence": 0.78,
       "bbox": [120, 200, 180, 260],
       "severity": "urgent",
-      "tooth_number": "Q3-5"
+      "tooth_number": "36",
+      "class_id": 1
+    }
+  ],
+  "measurements": [
+    {
+      "tooth_number": "36",
+      "mm": 3.2,
+      "status": "moderate",
+      "note": "Stredná resorpcia kosti"
     }
   ]
 }
@@ -200,104 +212,78 @@ curl -X POST "http://localhost:8000/analyze/?conf=0.05" \
 | Metric | Value |
 |--------|-------|
 | **Model Architecture** | YOLOv8x (extra-large) |
-| **Training Dataset** | 10,171 images (merged from 3 datasets) |
-| **Classes** | 19 dental conditions |
-| **mAP50** | 0.306 (Phase 2, YOLOv8m) |
-| **Training Hardware** | NVIDIA GPU (local) / Kaggle P100 |
+| **Training Dataset** | DENTEX (705 train, 46 val, 250 test) |
+| **Classes** | 4 diagnoses: Impacted, Caries, Periapical Lesion, Deep Caries |
+| **Image Resolution** | 1280×1280 |
+| **Training Hardware** | NVIDIA A10G (Modal) |
+| **Target mAP50** | ≥ 0.50 |
+| **Target Recall (Caries)** | ≥ 0.65 |
 
-### 19 Detection Classes
+### 4 Detection Classes
 
-| # | Class | Color | Severity |
-|---|-------|-------|----------|
-| 1 | Caries | 🟡 Gold-red | Urgent |
-| 2 | Deep Caries | 🔴 Red | Urgent |
-| 3 | Periapical Lesion | 🟣 Purple | Urgent |
-| 4 | Crown | 🔵 Blue | Watch |
-| 5 | Filling | ⚪ White | Watch |
-| 6 | Implant | 🔵 Teal | Watch |
-| 7 | Root Canal Treatment | 🔵 Blue | Watch |
-| 8 | Malaligned | ⚪ Gray | Watch |
-| 9 | Mandibular Canal | ⚪ Gray | Watch |
-| 10 | Impacted Tooth | 🟠 Orange | Treat Soon |
-| 11 | Missing Teeth | 🔴 Dark Red | Treat Soon |
-| 12 | Retained Root | 🔵 Navy | Treat Soon |
-| 13 | Root Piece | 🔵 Navy | Treat Soon |
-| 14 | Plating | ⚪ Silver | Watch |
-| 15 | Wire | ⚪ Silver | Watch |
-| 16 | Cyst | 🟣 Purple | Treat Soon |
-| 17 | Root Resorption | 🔴 Dark Red | Treat Soon |
-| 18 | Primary Teeth | ⚪ Gray | Watch |
-| 19 | — | — | — |
+| # | Class | Slovak | Color | Severity |
+|---|-------|--------|-------|----------|
+| 0 | Impacted | Retinovaný zub | 🟠 Orange | Watch |
+| 1 | Caries | Kaz | 🔴 Red | Urgent |
+| 2 | Periapical Lesion | Periapikálna lézia | 🟣 Purple | Treat Soon |
+| 3 | Deep Caries | Hlbokejší kaz | 🔴 Dark Red | Urgent |
 
-### Dataset Sources
+### Dataset Source
 
 | Dataset | Source | Images | Classes |
 |---------|--------|:------:|:-------:|
-| oral-disease | Kaggle | 8,616 | 5 |
-| dental-radiography | Kaggle | 1,269 | 2 |
-| tooth-dataset | Kaggle | 1,900 | 1 |
-| **Combined** | **Merged** | **10,171** | **5 → 19** |
-
-### Confidence Threshold Guide
-
-| Threshold | Behavior |
-|-----------|----------|
-| `0.01` | Maximum recall — detects weak Caries signals (recommended for screening) |
-| `0.05` | Balanced — catches most conditions with moderate noise |
-| `0.25` | Conservative — high-confidence detections only (default YOLO) |
-| `0.50+` | Strict — near-certainty detections only |
-
-> ⚠️ **Note:** The default YOLO confidence of 0.25 will miss most Caries detections. For comprehensive screening, use `conf=0.01`–`0.05`.
+| **DENTEX** | MICCAI 2023 Challenge | 1,005 (705/46/250 split) | 4 diagnoses + FDI |
+| **Validation** | Manual expert annotation | Hierarchical (quadrant + tooth + diagnosis) | |
 
 ---
 
 ## 🗺️ Roadmap
 
 ### Phase 1 — Foundation ✅
-- YOLOv8 inference pipeline with 19 classes
+- YOLOv8 inference pipeline with 4 classes
 - FastAPI backend with REST endpoints
 - React frontend with canvas overlay viewer
 - Docker deployment
 
 ### Phase 2 — Training & Optimization 🔄
-- Combined dataset from 3 sources (10,171 images)
-- YOLOv8x training with augmentation
-- mAP50 improvement target: 0.306 → 0.60+
+- DENTEX dataset training (Modal A10G GPU)
+- mAP50 improvement target: ≥ 0.50
 - Per-class confidence distribution analysis
 
-### Phase 3 — Clinical Features
+### Phase 3 — Clinical Features ✅
 - PDF report generation with severity triage
 - Grad-CAM explainability heatmaps
-- Gemini Vision natural language descriptions
+- CEJ-to-bone-crest millimeter measurements
 - Slovak localization for clinical workflow
+- Health score gauge + Odontogram FDI
 
 ### Phase 4 — Advanced ML
-- YOLOv8x retraining on expanded dataset
 - Cross-validation across datasets
 - Model ensemble (multi-scale inference)
-- FDI tooth number integration
+- FDI tooth number integration (2nd model)
 
 ### Phase 5 — Production
 - Multi-user authentication and session management
 - DICOM native support
 - PACS integration
 - Regulatory compliance (CE marking preparation)
-- Performance benchmarking vs. commercial systems (Diagnocat, Pearl AI)
 
 ---
 
 ## 🧪 Testing
 
 ```bash
-# Backend health check
-curl http://localhost:8000/health
+# Backend tests (138 tests)
+cd dental-ai/backend
+python -m pytest -v
+
+# Frontend build
+cd dental-ai/frontend
+npm run build
 
 # Full analysis test
 curl -X POST "http://localhost:8000/analyze/?conf=0.05" \
   -F "file=@test_images/sample_xray.jpg"
-
-# Frontend smoke test
-curl -s http://localhost:5173 | head -20
 ```
 
 ---
@@ -313,26 +299,34 @@ dental-ai/
 │   │   ├── ml/                   # ML pipeline modules
 │   │   │   ├── detector.py      # YOLOv8 inference engine
 │   │   │   ├── preprocessor.py  # CLAHE + denoising
-│   │   │   ├── reporter.py      # PDF report generation
+│   │   │   ├── reporter.py      # PDF report generation (Slovak)
 │   │   │   ├── gradcam.py       # Explainability heatmaps
 │   │   │   ├── heatmap.py       # Visualization
-│   │   │   └── gemini_vision.py # AI description
+│   │   │   ├── measurements.py  # CEJ-to-bone-crest mm
+│   │   │   └── database.py      # SQLite persistence
 │   │   ├── models/schemas.py    # Pydantic data models
 │   │   └── main.py              # FastAPI application
 │   ├── weights/                  # YOLOv8 model weights
-│   └── requirements.txt
+│   ├── requirements.txt
+│   └── tests/                    # 138 pytest tests
 ├── frontend/
 │   ├── src/
 │   │   ├── components/          # React components
+│   │   │   ├── FindingCard.tsx  # Detection cards (SK labels)
+│   │   │   ├── Odontogram.tsx   # FDI 11-48 visualization
+│   │   │   ├── MeasurementsPanel.tsx # mm measurements
+│   │   │   ├── HealthScoreGauge.tsx  # 0-100 gauge
+│   │   │   └── CanvasOverlay.tsx     # Interactive viewer
 │   │   ├── hooks/               # Custom React hooks
 │   │   ├── lib/                 # Utilities (labels, utils)
-│   │   └── App.tsx
+│   │   └── pages/Results.tsx    # Main analysis page
 │   └── package.json
-├── training/                     # YOLOv8 training scripts
-├── scripts/                      # Utility scripts
+├── datasets/dentex/              # DENTEX dataset (local/Modal)
+├── .github/workflows/ci.yml      # CI/CD pipeline
+├── docker-compose.yml            # Multi-container deployment
 ├── Dockerfile                    # Production container
-├── status.yaml                   # Project phase tracker
-└── README.md
+├── README.md
+└── LICENSE
 ```
 
 ---
@@ -351,6 +345,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ## 🙏 Acknowledgments
 
+- [DENTEX Dataset](https://huggingface.co/datasets/ibrahimhamamci/DENTEX) — MICCAI 2023 Challenge, hierarchical dental annotations
 - [Ultralytics YOLOv8](https://docs.ultralytics.com/) — Object detection framework
 - [FastAPI](https://fastapi.tiangolo.com/) — Modern Python web framework
 - [HuggingFace Spaces](https://huggingface.co/spaces) — Free ML deployment platform
