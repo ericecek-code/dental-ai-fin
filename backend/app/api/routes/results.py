@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse, PlainTextResponse
 from pathlib import Path
 import json
 import cv2
 
+from app.core.config import settings
 from app.ml.reporter import generate_pdf
 from app.ml.heatmap import HeatmapGenerator
 from app.ml.database import export_json, export_csv
@@ -15,34 +16,70 @@ REPORT_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR = Path("/tmp/dental-ai/outputs")
 
 
+def _verify_token(job_id: str, token: str | None) -> dict:
+    """Over access token pre daný job. Vráti result dict."""
+    data = export_json(job_id)
+    if not data:
+        job_file = OUTPUT_DIR / f"{job_id}.json"
+        if job_file.exists():
+            try:
+                data = json.loads(job_file.read_text())
+            except Exception:
+                pass
+    if not data:
+        raise HTTPException(404, "Analysis not found")
+
+    # Ak je API_TOKEN nastavený, over access_token
+    if settings.api_token and settings.api_token != "replace-with-generated-token":
+        expected = data.get("access_token")
+        if expected and token != expected:
+            raise HTTPException(403, "Invalid or missing access token")
+
+    return data
+
+
+def _check_file_access(job_id: str, token: str | None, suffix: str) -> Path:
+    """Over prístup k súboru (image endpoints — len existence + token)."""
+    file_path = OUTPUT_DIR / f"{job_id}{suffix}"
+    if not file_path.exists():
+        raise HTTPException(404, f"File not found")
+
+    # Token check len ak je API_TOKEN nastavený
+    if settings.api_token and settings.api_token != "replace-with-generated-token":
+        # Over či job existuje a token sedí
+        job_file = OUTPUT_DIR / f"{job_id}.json"
+        if job_file.exists():
+            try:
+                data = json.loads(job_file.read_text())
+                expected = data.get("access_token")
+                if expected and token != expected:
+                    raise HTTPException(403, "Invalid or missing access token")
+            except HTTPException:
+                raise
+            except Exception:
+                pass
+
+    return file_path
+
+
 @router.get("/{job_id}")
-def get_results(job_id: str):
+def get_results(job_id: str, token: str | None = Query(default=None)):
     """Return the detection result JSON for a given job."""
-    job_file = OUTPUT_DIR / f"{job_id}.json"
-    if job_file.exists():
-        try:
-            return json.loads(job_file.read_text())
-        except Exception:
-            pass
-    return {"job_id": job_id, "status": "unknown", "detections": []}
+    return _verify_token(job_id, token)
 
 
 @router.get("/{job_id}/original")
-def get_original(job_id: str):
+def get_original(job_id: str, token: str | None = Query(default=None)):
     """Return the enhanced PNG WITHOUT detection boxes."""
-    enhanced_path = OUTPUT_DIR / f"{job_id}_enhanced.png"
-    if not enhanced_path.exists():
-        raise HTTPException(status_code=404, detail="Original not found")
-    return FileResponse(str(enhanced_path), media_type="image/png")
+    path = _check_file_access(job_id, token, "_enhanced.png")
+    return FileResponse(str(path), media_type="image/png")
 
 
 @router.get("/{job_id}/overlay")
-def get_overlay(job_id: str):
+def get_overlay(job_id: str, token: str | None = Query(default=None)):
     """Return the enhanced PNG with detections drawn (if any)."""
-    overlay_path = OUTPUT_DIR / f"{job_id}_overlay.png"
-    if not overlay_path.exists():
-        raise HTTPException(status_code=404, detail="Overlay not found")
-    return FileResponse(str(overlay_path), media_type="image/png")
+    path = _check_file_access(job_id, token, "_overlay.png")
+    return FileResponse(str(path), media_type="image/png")
 
 
 # ---------------------------------------------------------------------------
@@ -50,13 +87,11 @@ def get_overlay(job_id: str):
 # ---------------------------------------------------------------------------
 
 @router.get("/{job_id}/enhanced")
-async def get_enhanced(job_id: str):
+async def get_enhanced(job_id: str, token: str | None = Query(default=None)):
     """Return CLAHE-enhanced image as a PNG."""
     try:
-        enhanced_path = OUTPUT_DIR / f"{job_id}_enhanced.png"
-        if not enhanced_path.exists():
-            raise HTTPException(404, "Image not found")
-        return FileResponse(str(enhanced_path), media_type="image/png")
+        path = _check_file_access(job_id, token, "_enhanced.png")
+        return FileResponse(str(path), media_type="image/png")
     except HTTPException:
         raise
     except Exception as e:
@@ -64,13 +99,11 @@ async def get_enhanced(job_id: str):
 
 
 @router.get("/{job_id}/pseudocolor")
-async def get_pseudocolor(job_id: str, colormap: str = "bone"):
+async def get_pseudocolor(job_id: str, colormap: str = "bone", token: str | None = Query(default=None)):
     """Return pseudocolor-enhanced version as a PNG image."""
     try:
-        enhanced_path = OUTPUT_DIR / f"{job_id}_enhanced.png"
-        if not enhanced_path.exists():
-            raise HTTPException(404, "Image not found")
-        image = cv2.imread(str(enhanced_path))
+        path = _check_file_access(job_id, token, "_enhanced.png")
+        image = cv2.imread(str(path))
         if image is None:
             raise HTTPException(404, "Image unreadable")
 
@@ -96,14 +129,11 @@ async def get_pseudocolor(job_id: str, colormap: str = "bone"):
 
 
 @router.get("/{job_id}/heatmap")
-async def get_heatmap(job_id: str):
+async def get_heatmap(job_id: str, token: str | None = Query(default=None)):
     """Return Grad-CAM heatmap overlay as a PNG image."""
     try:
-        json_path = OUTPUT_DIR / f"{job_id}.json"
-        if not json_path.exists():
-            raise HTTPException(404, "Job not found")
-        result = json.loads(json_path.read_text())
-        detections = result.get("detections", [])
+        data = _verify_token(job_id, token)
+        detections = data.get("detections", [])
 
         enhanced_path = OUTPUT_DIR / f"{job_id}_enhanced.png"
         image = cv2.imread(str(enhanced_path))
@@ -125,10 +155,10 @@ async def get_heatmap(job_id: str):
 
 
 @router.get("/{job_id}/report")
-def get_report(job_id: str):
+def get_report(job_id: str, token: str | None = Query(default=None)):
+    data = _verify_token(job_id, token)
     output_path = REPORT_DIR / f"{job_id}.pdf"
-    result = get_results(job_id)
-    generate_pdf(result, str(output_path))
+    generate_pdf(data, str(output_path))
     return FileResponse(str(output_path), media_type="application/pdf")
 
 
@@ -137,18 +167,18 @@ def get_report(job_id: str):
 # ---------------------------------------------------------------------------
 
 @router.get("/{job_id}/json")
-def get_json_export(job_id: str):
+def get_json_export(job_id: str, token: str | None = Query(default=None)):
     """Export analysis as JSON from database."""
     data = export_json(job_id)
     if not data:
-        # fallback to file-based
-        return get_results(job_id)
+        return _verify_token(job_id, token)
     return data
 
 
 @router.get("/{job_id}/csv")
-def get_csv_export(job_id: str):
+def get_csv_export(job_id: str, token: str | None = Query(default=None)):
     """Export detections as CSV."""
+    _verify_token(job_id, token)
     csv = export_csv(job_id)
     if not csv:
         raise HTTPException(404, "Analysis not found")
@@ -156,19 +186,9 @@ def get_csv_export(job_id: str):
 
 
 @router.get("/{job_id}/measurements")
-def get_measurements(job_id: str):
+def get_measurements(job_id: str, token: str | None = Query(default=None)):
     """Vráti iba merania (mm) pre danú analýzu."""
-    data = export_json(job_id)
-    if not data:
-        # fallback: read from file
-        job_file = OUTPUT_DIR / f"{job_id}.json"
-        if job_file.exists():
-            try:
-                data = json.loads(job_file.read_text())
-            except Exception:
-                pass
-    if not data:
-        raise HTTPException(404, "Analysis not found")
+    data = _verify_token(job_id, token)
     return {
         "job_id": job_id,
         "measurements": data.get("measurements", []),

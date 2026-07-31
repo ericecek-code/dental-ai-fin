@@ -2,15 +2,16 @@ import os
 # Patch DFLoss before any ultralytics import
 import app.ml._dfloss_compat  # noqa: F401
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 from pathlib import Path
 import uuid
 import shutil
 import json
-import base64
+import secrets
 import cv2
 import numpy as np
 
+from app.core.config import settings
 from app.ml.preprocessor import ImageEnhancer
 from app.ml.detector import Detector
 from app.ml.measurements import DentalMeasurement
@@ -25,6 +26,10 @@ OUTPUT_DIR = Path("/tmp/dental-ai/outputs")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm"}
+ALLOWED_CONTENT_TYPES = {
+    "image/png", "image/jpeg", "image/tiff", "image/x-tiff",
+    "application/dicom",
+}
 
 enhancer = ImageEnhancer()
 detector = Detector(model_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "weights", "yolov8x_dental.pt"))
@@ -137,71 +142,119 @@ def _draw_boxes(image: np.ndarray, detections):
 # ---------------------------------------------------------------------------
 
 @router.post("/")
-async def analyze_xray(file: UploadFile = File(...), conf: float = 0.01):
+async def analyze_xray(
+    file: UploadFile = File(...),
+    conf: float = Query(default=0.05),
+    token: str | None = Query(default=None),
+):
+    # --- Auth: ak je API_TOKEN nastavený, vyžaduj ho ---
+    if settings.api_token and settings.api_token != "replace-with-generated-token":
+        if token != settings.api_token:
+            raise HTTPException(status_code=403, detail="Invalid or missing API token")
+
+    # --- Validácia typu súboru (extension) ---
     suffix = Path(file.filename).suffix.lower()
     if suffix not in ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail="Invalid file type")
 
+    # --- Validácia content_type (ak je nastavený) ---
+    if file.content_type and file.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail=f"Unsupported content type: {file.content_type}")
+
+    # --- Filename sanitácia: iba basename, žiadne path traversal ---
+    safe_filename = Path(file.filename).name
+
     job_id = uuid.uuid4().hex
     upload_path = UPLOAD_DIR / f"{job_id}{suffix}"
-    with upload_path.open("wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
 
-    image = cv2.imdecode(np.fromfile(str(upload_path), dtype=np.uint8), cv2.IMREAD_COLOR)
-    if image is None:
-        raise HTTPException(status_code=400, detail="Unreadable image")
-
-    enhanced = enhancer.enhance(image)["enhanced"]
-    enhanced_path = OUTPUT_DIR / f"{job_id}_enhanced.png"
-    cv2.imwrite(str(enhanced_path), enhanced)
-
-    conf = max(0.005, min(conf, 0.95))
     try:
-        detections = detector.predict(enhanced, conf=conf)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Detection failed: {e}")
+        with upload_path.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    overlay = _draw_boxes(enhanced, detections)
-    overlay_path = OUTPUT_DIR / f"{job_id}_overlay.png"
-    cv2.imwrite(str(overlay_path), overlay)
+        # --- Upload size limit ---
+        file_size_mb = upload_path.stat().st_size / (1024 * 1024)
+        if file_size_mb > settings.upload_max_size_mb:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large: {file_size_mb:.1f} MB (max {settings.upload_max_size_mb} MB)",
+            )
 
-    by_class: dict = {}
-    for det in detections:
-        c = det.get("label", "?")
-        d = by_class.setdefault(c, {"count": 0, "max_conf": 0.0, "severity": det.get("severity")})
-        d["count"] += 1
-        d["max_conf"] = max(d["max_conf"], det.get("confidence", 0.0))
+        # --- Empty file check ---
+        if upload_path.stat().st_size == 0:
+            raise HTTPException(status_code=400, detail="Empty file")
 
-    # --- Measurements (mm) ---
-    measurements = measurer.measure_cej_to_bone_crest(enhanced, detections)
+        # --- Image decode validation (magic bytes + OpenCV) ---
+        image = cv2.imdecode(np.fromfile(str(upload_path), dtype=np.uint8), cv2.IMREAD_COLOR)
+        if image is None:
+            raise HTTPException(status_code=400, detail="Unreadable image or invalid image data")
 
-    # --- Health score (simple heuristic) ---
-    urgent = sum(1 for d in detections if d.get("severity") == "urgent")
-    treat = sum(1 for d in detections if d.get("severity") == "treat_soon")
-    total = len(detections) or 1
-    health_score = max(0.0, 1.0 - (urgent * 0.3 + treat * 0.15) / total)
+        enhanced = enhancer.enhance(image)["enhanced"]
+        enhanced_path = OUTPUT_DIR / f"{job_id}_enhanced.png"
+        cv2.imwrite(str(enhanced_path), enhanced)
 
-    result = {
-        "job_id": job_id,
-        "status": "done",
-        "filename": file.filename,
-        "conf_threshold": conf,
-        "enhanced_image_path": str(enhanced_path),
-        "overlay_path": str(overlay_path),
-        "detection_count": len(detections),
-        "by_class": by_class,
-        "detections": detections,
-        "measurements": measurements,
-        "health_score": round(health_score, 2),
-    }
+        # --- Confidence clamp ---
+        conf = max(0.005, min(conf, 0.95))
 
-    json_path = OUTPUT_DIR / f"{job_id}.json"
-    json_path.write_text(json.dumps(result, indent=2))
+        try:
+            detections = detector.predict(enhanced, conf=conf)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Detection failed: {e}")
 
-    # --- Persist to SQLite ---
-    try:
-        save_analysis(job_id, result)
+        overlay = _draw_boxes(enhanced, detections)
+        overlay_path = OUTPUT_DIR / f"{job_id}_overlay.png"
+        cv2.imwrite(str(overlay_path), overlay)
+
+        by_class: dict = {}
+        for det in detections:
+            c = det.get("label", "?")
+            d = by_class.setdefault(c, {"count": 0, "max_conf": 0.0, "severity": det.get("severity")})
+            d["count"] += 1
+            d["max_conf"] = max(d["max_conf"], det.get("confidence", 0.0))
+
+        # --- Measurements (mm) ---
+        measurements = measurer.measure_cej_to_bone_crest(enhanced, detections)
+
+        # --- Health score (simple heuristic) ---
+        urgent = sum(1 for d in detections if d.get("severity") == "urgent")
+        treat = sum(1 for d in detections if d.get("severity") == "treat_soon")
+        total = len(detections) or 1
+        health_score = max(0.0, 1.0 - (urgent * 0.3 + treat * 0.15) / total)
+
+        # --- Access token pre results ---
+        access_token = secrets.token_urlsafe(16)
+
+        result = {
+            "job_id": job_id,
+            "access_token": access_token,
+            "status": "done",
+            "filename": safe_filename,
+            "conf_threshold": conf,
+            "enhanced_image_path": str(enhanced_path),
+            "overlay_path": str(overlay_path),
+            "detection_count": len(detections),
+            "by_class": by_class,
+            "detections": detections,
+            "measurements": measurements,
+            "health_score": round(health_score, 2),
+        }
+
+        json_path = OUTPUT_DIR / f"{job_id}.json"
+        json_path.write_text(json.dumps(result, indent=2))
+
+        # --- Persist to SQLite ---
+        try:
+            save_analysis(job_id, result)
+        except Exception:
+            pass  # non-critical
+
+        return result
+
+    except HTTPException:
+        # --- Cleanup pri chybe (neodstraňuj úspešné joby) ---
+        if upload_path.exists() and not OUTPUT_DIR.exists():
+            upload_path.unlink(missing_ok=True)
+        raise
     except Exception:
-        pass  # non-critical
-
-    return result
+        # --- Cleanup pri neočakávanej chybe ---
+        upload_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=500, detail="Internal analysis error")

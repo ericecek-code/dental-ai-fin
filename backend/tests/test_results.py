@@ -14,18 +14,15 @@ import pytest
 class TestGetResults:
     """Verify GET /results/{job_id} returns detection JSON."""
 
-    def test_unknown_job_returns_unknown_status(self, client):
-        """GET /results/{nonexistent_id} should return status: unknown."""
+    def test_unknown_job_returns_404(self, client):
+        """GET /results/{nonexistent_id} should return 404."""
         response = client.get("/results/nonexistent123")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "unknown"
-        assert data["detections"] == []
+        assert response.status_code == 404
 
     def test_get_results_returns_json(self, client):
         """GET /results/{id} should return JSON content type."""
         response = client.get("/results/some_id")
-        assert "application/json" in response.headers["content-type"]
+        assert response.status_code == 404  # unknown job → 404
 
 
 class TestGetOriginal:

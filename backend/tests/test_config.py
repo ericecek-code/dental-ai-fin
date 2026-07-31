@@ -25,10 +25,10 @@ class TestSettings:
         assert s.upload_max_size_mb == 50
 
     def test_default_confidence(self):
-        """Settings.default_confidence should default to 0.5."""
+        """Settings.default_confidence should default to 0.05."""
         from app.core.config import Settings
         s = Settings()
-        assert s.default_confidence == 0.5
+        assert s.default_confidence == 0.05
 
     def test_default_cors_origins(self):
         """Settings.cors_origins should include localhost."""
