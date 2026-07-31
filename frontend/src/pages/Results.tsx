@@ -12,6 +12,7 @@ import Odontogram from '../components/Odontogram';
 import ComparisonView from '../components/ComparisonView';
 import Annotations from '../components/Annotations';
 import HistoryPanel from '../components/HistoryPanel';
+import MeasurementsPanel from '../components/MeasurementsPanel';
 import { translateClass } from '../lib/labels';
 
 const API_BASE = window.location.origin;
@@ -376,12 +377,15 @@ const Results = () => {
             <Odontogram findings={yoloResult?.detections || []} />
 
             {/* Annotations panel */}
-            <Annotations
-              detections={yoloResult?.detections || []}
-              onSave={handleSaveAnnotations}
-            />
+                        <Annotations
+                          detections={yoloResult?.detections || []}
+                          onSave={handleSaveAnnotations}
+                        />
 
-            {/* PDF Export Button */}
+                        {/* Measurements panel */}
+                        <MeasurementsPanel jobId={yoloResult?.job_id || null} enabled={!!yoloResult} />
+
+                        {/* PDF Export Button */}
                         {yoloResult && (
                           <a
                             className="glass-panel flex items-center justify-center gap-2 p-3 text-sm font-semibold text-dental-primary hover:bg-dental-primary/10 transition-all duration-200 box-glow-teal"

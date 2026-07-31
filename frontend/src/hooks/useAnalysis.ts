@@ -66,3 +66,8 @@ export const useJobResults = (jobId: string | null) => {
   };
   return { fetchResults };
 };
+
+export const getMeasurements = async (jobId: string) => {
+  const { data } = await axios.get(`${API_BASE}/results/${jobId}/measurements`);
+  return data;
+};
