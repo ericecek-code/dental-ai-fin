@@ -1,0 +1,21 @@
+# DENTEX Dataset - YOLO Configuration
+# Paths relative to project root (where yolo command runs)
+
+path: datasets/dentex  # dataset root
+train: images/train  # train images
+val: images/val      # val images
+test: images/test    # test images (optional)
+
+# Classes: 4 diagnoses from DENTEX categories_3
+# 0: Impacted
+# 1: Caries
+# 2: Periapical Lesion
+# 3: Deep Caries
+
+names:
+  0: Impacted
+  1: Caries
+  2: Periapical Lesion
+  3: Deep Caries
+
+# nc: 4
