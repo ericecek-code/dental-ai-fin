@@ -1,3 +1,12 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+frontend/node_modules/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -78,5 +87,20 @@ vcomp140d.dll
 .DS_Store
 Thumbs.db
 
+# Datasets (too large for git)
+mega-dataset/
+mega-dataset.zip
+combined-dataset/
+combined-dataset-v2/
+
+# Training artifacts
+*.pt
+!backend/weights/*.pt
+runs/
+benchmark_results/
+
 # Logs
 *.log
+
+# IDE
+.cursor/

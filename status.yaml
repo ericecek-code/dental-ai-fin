@@ -1,9 +1,9 @@
-current_phase: "phase2_local_training_yolov8"
-status: "completed"
-last_update: "2026-07-19T19:17:30Z"
-agent: "OpenCode"
-message: "YOLOv8m tréning dokončený. mAP50=0.306, best.pt uložený. Early stopping epoch 17/50."
+current_phase: "phase4_yolov8x_retraining"
+status: "in_progress"
+last_update: "2026-07-20T12:00:00Z"
+agent: "MiMoCode"
+message: "YOLOv8x tréning spustený na restorative-ai datasete (594 train, 5 tried). Cieľ: mAP50 >= 0.95."
 
-next_phase: "phase3_comparison"
-next_agent: "Hermes"
+next_phase: "phase5_evaluation"
+next_agent: "MiMoCode"
 blocked_until: null
