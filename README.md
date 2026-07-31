@@ -22,6 +22,7 @@ tags:
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-FF6B6B.svg)](https://docs.ultralytics.com/)
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg?logo=react)](https://react.dev/)
+[![CI](https://github.com/ericecek-code/dental-ai-fin/actions/workflows/ci.yml/badge.svg)](https://github.com/ericecek-code/dental-ai-fin/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
