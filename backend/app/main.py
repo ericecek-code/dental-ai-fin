@@ -4,6 +4,10 @@ from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 import os
 
+# Initialize SQLite database on startup
+from app.ml.database import init_db
+init_db()
+
 app = FastAPI(title="Dental AI", version="0.1.0")
 
 app.add_middleware(
@@ -27,18 +31,22 @@ app.add_middleware(
 # 1) Register API routers
 # ---------------------------------------------------------------------------
 try:
-    from .api.routes import health, analyze, websocket, results, vision
-    _routers = [health.router, analyze.router, websocket.router, results.router, vision.router]
+    from .api.routes import health, analyze, websocket, results, vision, history
+    _routers = [health.router, analyze.router, websocket.router, results.router, vision.router, history.router]
 except Exception:
     try:
-        from .api.routes import health, analyze, websocket, results
-        _routers = [health.router, analyze.router, websocket.router, results.router]
+        from .api.routes import health, analyze, websocket, results, history
+        _routers = [health.router, analyze.router, websocket.router, results.router, history.router]
     except Exception:
         try:
-            from .api.routes import health, analyze, websocket
-            _routers = [health.router, analyze.router, websocket.router]
+            from .api.routes import health, analyze, websocket, results
+            _routers = [health.router, analyze.router, websocket.router, results.router]
         except Exception:
-            _routers = []
+            try:
+                from .api.routes import health, analyze, websocket
+                _routers = [health.router, analyze.router, websocket.router]
+            except Exception:
+                _routers = []
 
 for _router in _routers:
     app.include_router(_router)

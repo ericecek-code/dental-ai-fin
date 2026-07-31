@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from pathlib import Path
 import json
 import cv2
 
 from app.ml.reporter import generate_pdf
 from app.ml.heatmap import HeatmapGenerator
+from app.ml.database import export_json, export_csv
 
 router = APIRouter(prefix="/results", tags=["results"])
 
@@ -129,3 +130,47 @@ def get_report(job_id: str):
     result = get_results(job_id)
     generate_pdf(result, str(output_path))
     return FileResponse(str(output_path), media_type="application/pdf")
+
+
+# ---------------------------------------------------------------------------
+# Export / measurement endpoints
+# ---------------------------------------------------------------------------
+
+@router.get("/{job_id}/json")
+def get_json_export(job_id: str):
+    """Export analysis as JSON from database."""
+    data = export_json(job_id)
+    if not data:
+        # fallback to file-based
+        return get_results(job_id)
+    return data
+
+
+@router.get("/{job_id}/csv")
+def get_csv_export(job_id: str):
+    """Export detections as CSV."""
+    csv = export_csv(job_id)
+    if not csv:
+        raise HTTPException(404, "Analysis not found")
+    return PlainTextResponse(csv, media_type="text/csv")
+
+
+@router.get("/{job_id}/measurements")
+def get_measurements(job_id: str):
+    """Vráti iba merania (mm) pre danú analýzu."""
+    data = export_json(job_id)
+    if not data:
+        # fallback: read from file
+        job_file = OUTPUT_DIR / f"{job_id}.json"
+        if job_file.exists():
+            try:
+                data = json.loads(job_file.read_text())
+            except Exception:
+                pass
+    if not data:
+        raise HTTPException(404, "Analysis not found")
+    return {
+        "job_id": job_id,
+        "measurements": data.get("measurements", []),
+        "health_score": data.get("health_score", 0),
+    }

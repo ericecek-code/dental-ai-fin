@@ -13,6 +13,8 @@ import numpy as np
 
 from app.ml.preprocessor import ImageEnhancer
 from app.ml.detector import Detector
+from app.ml.measurements import DentalMeasurement
+from app.ml.database import save_analysis
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -26,6 +28,7 @@ ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm"}
 
 enhancer = ImageEnhancer()
 detector = Detector(model_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "weights", "yolov8x_dental.pt"))
+measurer = DentalMeasurement()
 
 
 def _patch_torch_weights_only() -> None:
@@ -169,6 +172,15 @@ async def analyze_xray(file: UploadFile = File(...), conf: float = 0.01):
         d["count"] += 1
         d["max_conf"] = max(d["max_conf"], det.get("confidence", 0.0))
 
+    # --- Measurements (mm) ---
+    measurements = measurer.measure_cej_to_bone_crest(enhanced, detections)
+
+    # --- Health score (simple heuristic) ---
+    urgent = sum(1 for d in detections if d.get("severity") == "urgent")
+    treat = sum(1 for d in detections if d.get("severity") == "treat_soon")
+    total = len(detections) or 1
+    health_score = max(0.0, 1.0 - (urgent * 0.3 + treat * 0.15) / total)
+
     result = {
         "job_id": job_id,
         "status": "done",
@@ -179,9 +191,17 @@ async def analyze_xray(file: UploadFile = File(...), conf: float = 0.01):
         "detection_count": len(detections),
         "by_class": by_class,
         "detections": detections,
+        "measurements": measurements,
+        "health_score": round(health_score, 2),
     }
 
     json_path = OUTPUT_DIR / f"{job_id}.json"
     json_path.write_text(json.dumps(result, indent=2))
+
+    # --- Persist to SQLite ---
+    try:
+        save_analysis(job_id, result)
+    except Exception:
+        pass  # non-critical
 
     return result

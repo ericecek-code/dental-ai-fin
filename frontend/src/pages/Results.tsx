@@ -9,6 +9,9 @@ import Navbar from '../components/Navbar';
 import HealthScoreGauge from '../components/HealthScoreGauge';
 import FindingCard from '../components/FindingCard';
 import Odontogram from '../components/Odontogram';
+import ComparisonView from '../components/ComparisonView';
+import Annotations from '../components/Annotations';
+import HistoryPanel from '../components/HistoryPanel';
 import { translateClass } from '../lib/labels';
 
 const API_BASE = window.location.origin;
@@ -57,6 +60,9 @@ const Results = () => {
   const [colormap, setColormap] = useState('bone');
   const [hoveredDetection, setHoveredDetection] = useState<number | null>(null);
 
+  // New state: comparison view toggle
+  const [showComparison, setShowComparison] = useState(false);
+
   const analyze = useAnalyze();
 
   const handleFile = (file: File) => {
@@ -64,6 +70,7 @@ const Results = () => {
     setStatus('uploading');
     setYoloResult(null);
     setImageMode('original');
+    setShowComparison(false);
 
     analyze.mutate(
       { file, conf: confidence },
@@ -100,6 +107,22 @@ const Results = () => {
   }, [yoloResult]);
 
   const healthScore = useMemo(() => computeHealthScore(yoloResult), [yoloResult]);
+
+  // Export handlers
+  const handleExportJson = () => {
+    if (!yoloResult) return;
+    window.open(`${API_BASE}/history/${yoloResult.job_id}/json`, '_blank');
+  };
+
+  const handleExportCsv = () => {
+    if (!yoloResult) return;
+    window.open(`${API_BASE}/history/${yoloResult.job_id}/csv`, '_blank');
+  };
+
+  const handleSaveAnnotations = (annotations: any[]) => {
+    // Store annotations (could be sent to backend in future)
+    console.log('Saved annotations:', annotations);
+  };
 
   return (
     <div className="min-h-screen bg-dental-bg">
@@ -200,28 +223,113 @@ const Results = () => {
                 </div>
               </div>
             )}
+
+            {/* Comparison view toggle */}
+            {yoloResult && (
+              <button
+                onClick={() => setShowComparison(!showComparison)}
+                className={`
+                  w-full flex items-center justify-center gap-2 p-3 rounded-lg text-xs font-semibold transition-all duration-200
+                  ${showComparison
+                    ? 'bg-dental-primary/20 text-dental-primary border border-dental-primary/30'
+                    : 'glass-panel text-dental-textMuted hover:text-dental-textMain hover:bg-dental-surfaceHighlight/50'
+                  }
+                `}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="2" y="3" width="8" height="18" rx="1" />
+                  <rect x="14" y="3" width="8" height="18" rx="1" />
+                </svg>
+                {showComparison ? 'Porovnanie zapnuté' : 'Porovnanie snímok'}
+              </button>
+            )}
+
+            {/* Export buttons */}
+            {yoloResult && (
+              <div className="glass-panel p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-dental-textMuted mb-3">
+                  Export
+                </h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={handleExportJson}
+                    className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-[11px] font-medium text-slate-300 hover:text-white transition-all duration-200"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Stiahnuť JSON
+                  </button>
+                  <button
+                    onClick={handleExportCsv}
+                    className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-[11px] font-medium text-slate-300 hover:text-white transition-all duration-200"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Stiahnuť CSV
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* History panel */}
+            <HistoryPanel />
           </aside>
 
           {/* ═══ CENTER CANVAS ═══ */}
           <main className="flex-1 flex flex-col overflow-hidden p-4">
-            <div className="glass-panel flex-1 flex flex-col overflow-hidden scan-line-overlay">
-              <div className="flex-1 overflow-hidden">
-                <CanvasOverlay
-                  imageUrl={imageUrl}
+            {showComparison ? (
+              /* Comparison View */
+              <div className="flex-1 flex flex-col gap-4 overflow-y-auto">
+                <ComparisonView
+                  originalUrl={yoloResult ? `${API_BASE}/results/${yoloResult.job_id}/original` : undefined}
+                  enhancedUrl={yoloResult ? `${API_BASE}/results/${yoloResult.job_id}/enhanced` : undefined}
                   detections={mappedDetections}
-                  viewMode={viewMode}
                 />
+                {/* Detection overlay list in comparison mode */}
+                {mappedDetections.length > 0 && (
+                  <div className="glass-panel p-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-dental-textMuted mb-3">
+                      Nálezy na porovnanie
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      {mappedDetections.map((d, i) => (
+                        <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50">
+                          <span className="w-2 h-2 rounded-full bg-dental-primary shrink-0" />
+                          <span className="text-white truncate">{translateClass(d.label)}</span>
+                          <span className="text-dental-primary font-mono ml-auto">{(d.confidence * 100).toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              {/* Bottom info bar */}
-              <div className="px-4 py-2 border-t border-white/5 flex items-center justify-between text-[10px] text-dental-textMuted">
-                <span>
-                  R = boxy · F = kurzor · 0 = reset · koliesko = zoom
-                </span>
-                <span>
-                  {viewMode === 'clinical' ? '🏥 Klinický režim' : '👤 Pacientský režim'}
-                </span>
+            ) : (
+              /* Normal canvas view */
+              <div className="glass-panel flex-1 flex flex-col overflow-hidden scan-line-overlay">
+                <div className="flex-1 overflow-hidden">
+                  <CanvasOverlay
+                    imageUrl={imageUrl}
+                    detections={mappedDetections}
+                    viewMode={viewMode}
+                  />
+                </div>
+                {/* Bottom info bar */}
+                <div className="px-4 py-2 border-t border-white/5 flex items-center justify-between text-[10px] text-dental-textMuted">
+                  <span>
+                    R = boxy · F = kurzor · 0 = reset · koliesko = zoom
+                  </span>
+                  <span>
+                    {viewMode === 'clinical' ? '🏥 Klinický režim' : '👤 Pacientský režim'}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
           </main>
 
           {/* ═══ RIGHT PANEL (320px) ═══ */}
@@ -266,6 +374,12 @@ const Results = () => {
 
             {/* Odontogram */}
             <Odontogram findings={yoloResult?.detections || []} />
+
+            {/* Annotations panel */}
+            <Annotations
+              detections={yoloResult?.detections || []}
+              onSave={handleSaveAnnotations}
+            />
 
             {/* PDF Export Button */}
             {yoloResult && (

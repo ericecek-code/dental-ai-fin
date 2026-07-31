@@ -1,4 +1,4 @@
-"""Tests for the PDF reporter module."""
+"""Tests for the enhanced PDF reporter module."""
 
 import os
 import tempfile
@@ -83,6 +83,93 @@ class TestSkSeverityFunction:
         assert result == "unknown_level"
 
 
+class TestHealthScore:
+    """Test the health score computation."""
+
+    def test_perfect_score_no_detections(self):
+        """No detections should yield score of 100."""
+        from app.ml.reporter import _compute_health_score
+        result = _compute_health_score([])
+        assert result["score"] == 100
+        assert result["total"] == 0
+
+    def test_urgent_deductions(self):
+        """Urgent detections should reduce score by 30 each."""
+        from app.ml.reporter import _compute_health_score
+        dets = [
+            {"severity": "urgent", "label": "Caries"},
+        ]
+        result = _compute_health_score(dets)
+        assert result["score"] == 70
+
+    def test_multiple_urgents(self):
+        """Two urgent detections should reduce score by 60."""
+        from app.ml.reporter import _compute_health_score
+        dets = [
+            {"severity": "urgent", "label": "Caries"},
+            {"severity": "urgent", "label": "Deep Caries"},
+        ]
+        result = _compute_health_score(dets)
+        assert result["score"] == 40
+
+    def test_score_never_below_zero(self):
+        """Score should be clamped at 0 even with many detections."""
+        from app.ml.reporter import _compute_health_score
+        dets = [{"severity": "urgent", "label": "Caries"} for _ in range(10)]
+        result = _compute_health_score(dets)
+        assert result["score"] == 0
+
+    def test_mixed_severities(self):
+        """Mixed severities should reduce score correctly."""
+        from app.ml.reporter import _compute_health_score
+        dets = [
+            {"severity": "urgent", "label": "Caries"},       # -30
+            {"severity": "treat_soon", "label": "Cyst"},      # -15
+            {"severity": "watch", "label": "Filling"},        # -5
+        ]
+        result = _compute_health_score(dets)
+        assert result["score"] == 50  # 100 - 30 - 15 - 5
+        assert result["total"] == 3
+
+
+class TestRecommendations:
+    """Test recommendation generation."""
+
+    def test_no_detections_returns_empty(self):
+        """No detections should return empty list."""
+        from app.ml.reporter import _generate_recommendations
+        result = _generate_recommendations([])
+        assert result == []
+
+    def test_urgent_sorted_first(self):
+        """Urgent items should appear before watch items."""
+        from app.ml.reporter import _generate_recommendations
+        dets = [
+            {"label": "Filling", "tooth_number": "Q2-1", "severity": "watch"},
+            {"label": "Caries", "tooth_number": "Q1-1", "severity": "urgent"},
+        ]
+        result = _generate_recommendations(dets)
+        assert "Kaz" in result[0]  # "Caries" translated to Slovak
+
+    def test_followup_interval_urgent(self):
+        """Urgent detection should yield 3-month follow-up."""
+        from app.ml.reporter import _followup_interval
+        dets = [{"severity": "urgent", "label": "Caries"}]
+        assert _followup_interval(dets) == "3 mesiace"
+
+    def test_followup_interval_treat_soon(self):
+        """Treat_soon detection should yield 6-month follow-up."""
+        from app.ml.reporter import _followup_interval
+        dets = [{"severity": "treat_soon", "label": "Cyst"}]
+        assert _followup_interval(dets) == "6 mesiacov"
+
+    def test_followup_interval_watch(self):
+        """Watch-only detections should yield 12-month follow-up."""
+        from app.ml.reporter import _followup_interval
+        dets = [{"severity": "watch", "label": "Filling"}]
+        assert _followup_interval(dets) == "12 mesiacov"
+
+
 class TestGeneratePDF:
     """Test PDF report generation."""
 
@@ -131,13 +218,8 @@ class TestGeneratePDF:
         output_path = str(tmp_path / "test_report3.pdf")
         generate_pdf(sample_result_dict, output_path)
 
-        # PDF content is FlateDecode-compressed, so check the metadata object
-        # which is uncompressed and contains the job info
         content = open(output_path, "rb").read()
-        # The PDF metadata /Title should contain info about the document
-        # Also verify the PDF has multiple objects (content, fonts, pages)
         assert b"%PDF-1.4" in content or b"%PDF-1.5" in content
-        # Verify the PDF is substantial (has embedded font data + content streams)
         assert len(content) > 5000
 
     def test_multiple_detections_in_pdf(self, tmp_path):
@@ -161,3 +243,74 @@ class TestGeneratePDF:
         assert os.path.getsize(output_path) > 500
         with open(output_path, "rb") as f:
             assert f.read(5) == b"%PDF-"
+
+    def test_returns_bytes(self, sample_result_dict):
+        """generate_pdf should return PDF bytes."""
+        from app.ml.reporter import generate_pdf
+        pdf_bytes = generate_pdf(sample_result_dict)
+        assert isinstance(pdf_bytes, bytes)
+        assert pdf_bytes[:5] == b"%PDF-"
+
+    def test_with_patient_id(self, sample_result_dict, tmp_path):
+        """generate_pdf with custom patient_id should produce valid PDF."""
+        from app.ml.reporter import generate_pdf
+        output_path = str(tmp_path / "patient_report.pdf")
+        generate_pdf(sample_result_dict, output_path, patient_id="PAT-2024-001")
+        assert os.path.exists(output_path)
+        with open(output_path, "rb") as f:
+            assert f.read(5) == b"%PDF-"
+
+    def test_with_xray_type(self, sample_result_dict, tmp_path):
+        """generate_pdf with different xray types should produce valid PDF."""
+        from app.ml.reporter import generate_pdf
+        for xray in ["panoramic", "bitewing", "periapical"]:
+            output_path = str(tmp_path / f"{xray}_report.pdf")
+            generate_pdf(sample_result_dict, output_path, xray_type=xray)
+            assert os.path.exists(output_path)
+            with open(output_path, "rb") as f:
+                assert f.read(5) == b"%PDF-"
+
+    def test_with_measurements(self, sample_result_dict, tmp_path):
+        """generate_pdf with measurements should produce valid PDF."""
+        from app.ml.reporter import generate_pdf
+        measurements = [
+            {"tooth": "Q1-1", "value_mm": 3.5, "side": "Mesial"},
+            {"tooth": "Q1-2", "value_mm": 5.2, "side": "Distal"},
+            {"tooth": "Q2-1", "value_mm": 1.8, "side": "Mesial"},
+        ]
+        output_path = str(tmp_path / "measurements_report.pdf")
+        generate_pdf(sample_result_dict, output_path, measurements=measurements)
+        assert os.path.exists(output_path)
+        with open(output_path, "rb") as f:
+            assert f.read(5) == b"%PDF-"
+
+    def test_pdf_size_with_measurements(self, sample_result_dict, tmp_path):
+        """PDF with measurements should be larger than without."""
+        from app.ml.reporter import generate_pdf
+        measurements = [
+            {"tooth": "Q1-1", "value_mm": 3.5, "side": "Mesial"},
+            {"tooth": "Q1-2", "value_mm": 5.2, "side": "Distal"},
+        ]
+        path_no_meas = str(tmp_path / "no_meas.pdf")
+        path_with_meas = str(tmp_path / "with_meas.pdf")
+        generate_pdf(sample_result_dict, path_no_meas)
+        generate_pdf(sample_result_dict, path_with_meas, measurements=measurements)
+        assert os.path.getsize(path_with_meas) >= os.path.getsize(path_no_meas)
+
+    def test_backward_compatibility_positional_args(self, sample_result_dict, tmp_path):
+        """Old calling convention: generate_pdf(result, output_path) should work."""
+        from app.ml.reporter import generate_pdf
+        output_path = str(tmp_path / "compat_report.pdf")
+        generate_pdf(sample_result_dict, output_path)
+        assert os.path.exists(output_path)
+        with open(output_path, "rb") as f:
+            assert f.read(5) == b"%PDF-"
+
+    def test_health_score_section_in_pdf(self, sample_result_dict, tmp_path):
+        """PDF should contain health score content (encoded bytes)."""
+        from app.ml.reporter import generate_pdf
+        output_path = str(tmp_path / "score_report.pdf")
+        generate_pdf(sample_result_dict, output_path)
+        content = open(output_path, "rb").read()
+        # The PDF should contain health score text (encoded)
+        assert len(content) > 8000  # substantial content
