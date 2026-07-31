@@ -14,8 +14,29 @@ const UploadZone = ({ onFile }: Props) => {
   );
 
   return (
-    <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-6 hover:border-blue-500">
-      <span className="text-sm text-gray-600">Kliknite pre nahratie RTG snímky</span>
+    <label className="glass-panel flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-dental-surfaceHighlight hover:border-dental-primary/50 p-6 transition-all duration-300 group scan-line-overlay">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-dental-primary/10 group-hover:bg-dental-primary/20 transition-colors">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#0D9488"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+      </div>
+      <span className="text-sm font-medium text-dental-textMain">
+        Kliknite pre nahratie RTG snímky
+      </span>
+      <span className="mt-1 text-[10px] text-dental-textMuted">
+        JPEG, PNG, DICOM • max 20 MB
+      </span>
       <input type="file" className="hidden" accept="image/*" onChange={onChange} />
     </label>
   );
