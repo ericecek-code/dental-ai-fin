@@ -158,7 +158,13 @@ async def get_heatmap(job_id: str, token: str | None = Query(default=None)):
 def get_report(job_id: str, token: str | None = Query(default=None)):
     data = _verify_token(job_id, token)
     output_path = REPORT_DIR / f"{job_id}.pdf"
-    generate_pdf(data, str(output_path))
+    generate_pdf(
+        data,
+        str(output_path),
+        measurements=data.get("measurements"),
+        patient_id=data.get("patient_id"),
+        xray_type=data.get("xray_type", "panoramic"),
+    )
     return FileResponse(str(output_path), media_type="application/pdf")
 
 
