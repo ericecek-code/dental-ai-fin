@@ -1,81 +1,100 @@
 # Contributing to Dental AI
 
-Thank you for your interest in contributing to Dental AI! This guide will help you get started with the development workflow.
+Thank you for your interest in contributing to Dental AI! This document provides guidelines for contributing to the project.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Python 3.11+** with pip
-- **Node.js 18+** with npm
+- **Python 3.11+** (backend)
+- **Node.js 18+** (frontend)
+- **Docker & Docker Compose** (optional, for containerized deployment)
 - **Git** for version control
-- Optional: **Docker** for containerized development
 
-### 1. Fork & Clone
+### Local Development Setup
 
-```bash
-# Fork the repo on GitHub, then clone
-git clone https://github.com/<your-username>/dental-ai.git
-cd dental-ai
-
-# Add the original repo as upstream
-git remote add upstream https://github.com/ericecek-code/dental-ai-fin.git
-```
-
-### 2. Set Up the Backend
+#### Backend (FastAPI)
 
 ```bash
-cd backend
+cd dental-ai/backend
+
+# Create virtual environment
 python -m venv .venv
 source .venv/bin/activate  # Linux/macOS
 .venv\Scripts\activate     # Windows
 
+# Install dependencies
 pip install -r requirements.txt
-```
 
-### 3. Set Up the Frontend
+# Run tests
+python -m pytest -v
 
-```bash
-cd frontend
-npm install
-```
-
-### 4. Run the Application
-
-Start both servers in separate terminals:
-
-```bash
-# Terminal 1 — Backend
-cd backend
+# Start development server
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-
-# Terminal 2 — Frontend
-cd frontend
-npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
-Open `http://localhost:5173` in your browser.
+#### Frontend (React + TypeScript)
 
----
+```bash
+cd dental-ai/frontend
 
-## 🔧 Development Workflow
+# Install dependencies
+npm install
 
-### Branch Naming
+# Start development server
+npm run dev -- --host 127.0.0.1 --port 5173
 
-Use descriptive branch names with prefixes:
+# Build for production
+npm run build
+```
 
-| Prefix | Use Case |
-|--------|----------|
-| `feat/` | New features |
-| `fix/` | Bug fixes |
-| `docs/` | Documentation changes |
-| `refactor/` | Code refactoring |
-| `test/` | Adding or updating tests |
-| `chore/` | Maintenance tasks |
+#### Full Stack with Docker
 
-Example: `feat/add-dicom-support`, `fix/confidence-slider-range`
+```bash
+cd dental-ai
+docker compose up --build
+```
 
-### Commit Message Format
+## 📋 Development Guidelines
+
+### Code Style
+
+#### Python (Backend)
+
+- **Formatter:** `black` (line length: 88)
+- **Linter:** `flake8` + `mypy` (strict)
+- **Import sorting:** `isort` (profile: black)
+- **Type hints:** Required for all public functions
+
+```bash
+# Format code
+black .
+
+# Check types
+mypy .
+
+# Lint
+flake8 .
+```
+
+#### TypeScript (Frontend)
+
+- **Formatter:** `prettier` (single quotes, trailing commas)
+- **Linter:** `eslint` (airbnb + typescript)
+- **Strict mode:** Enabled in `tsconfig.json`
+
+```bash
+# Format code
+npm run format
+
+# Lint
+npm run lint
+
+# Type check
+npm run typecheck
+```
+
+### Commit Messages
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
@@ -88,74 +107,45 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 **Types:**
-- `feat` — New feature
-- `fix` — Bug fix
-- `docs` — Documentation only
-- `style` — Formatting, semicolons, etc. (no code change)
-- `refactor` — Code restructuring (no feature or fix)
-- `test` — Adding or updating tests
-- `chore` — Build process, dependencies, tooling
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation changes
+- `style:` Code style (formatting, missing semicolons, etc.)
+- `refactor:` Code refactoring
+- `test:` Adding tests
+- `chore:` Maintenance tasks
 
 **Examples:**
 ```
-feat(backend): add DICOM file support to analyzer
-fix(frontend): correct confidence slider min/max range
-docs: update README with API endpoint examples
-refactor(detector): extract color map to config module
+feat(frontend): add MeasurementsPanel component with mm display
+fix(backend): handle empty file upload in analyze endpoint
+docs(readme): update DENTEX dataset information
+test(backend): add tests for PDF report generation
 ```
 
----
+### Branch Naming
 
-## 🎨 Code Style
-
-### Python (Backend)
-
-- **Formatter:** [Black](https://github.com/psf/black)
-- **Linter:** [Ruff](https://github.com/astral-sh/ruff) (recommended)
-- **Max line length:** 88 characters (Black default)
-- **Type hints:** Required for all public functions
-
-```bash
-# Auto-format before committing
-black backend/
-ruff check backend/ --fix
+```
+<type>/<short-description>
 ```
 
-**Key conventions:**
-- Use `snake_case` for variables and functions
-- Use `PascalCase` for classes
-- Use UPPER_SNAKE_CASE for constants
-- Import order: stdlib → third-party → local (separated by blank lines)
-- Docstrings: Google style for all public functions
+Examples:
+- `feat/measurements-panel`
+- `fix/pdf-report-measurements`
+- `docs/update-readme`
 
-### TypeScript/React (Frontend)
+### Pull Request Process
 
-- **Formatter:** [Prettier](https://prettier.io/)
-- **Linter:** [ESLint](https://eslint.org/) (configured via Vite)
-- **Style guide:** Airbnb React/TypeScript
-
-```bash
-# Auto-format before committing
-cd frontend
-npx prettier --write src/
-npx eslint src/ --fix
-```
-
-**Key conventions:**
-- Use `camelCase` for variables and functions
-- Use `PascalCase` for components and types
-- Prefer functional components with hooks
-- Destructure props in function signatures
-- Use named exports (not default exports for components)
-
-### File Organization
-
-- Keep components in `src/components/` with one component per file
-- Utility functions go in `src/lib/`
-- API types and schemas stay in `backend/app/models/`
-- ML pipeline modules belong in `backend/app/ml/`
-
----
+1. **Fork** the repository
+2. **Create** a feature branch from `main`
+3. **Make** your changes with tests
+4. **Run** the full test suite locally
+5. **Submit** a PR with:
+   - Clear description of changes
+   - Link to related issue (if any)
+   - Screenshots (for UI changes)
+6. **Wait** for code review
+7. **Merge** after approval
 
 ## 🧪 Testing
 
@@ -163,137 +153,140 @@ npx eslint src/ --fix
 
 ```bash
 cd backend
-python -m pytest tests/ -v
+python -m pytest -v --cov=app --cov-report=term-missing
 ```
+
+- **Unit tests:** `tests/test_*.py`
+- **Integration tests:** `tests/integration/`
+- **Coverage target:** ≥ 80%
 
 ### Frontend Tests
 
 ```bash
 cd frontend
-npm run test
+npm run test          # Unit tests (Vitest)
+npm run test:e2e      # E2E tests (Playwright)
 ```
 
-### Manual Testing Checklist
+## 📦 Releases
 
-Before submitting a PR, verify:
+### Versioning
 
-- [ ] Backend starts without errors (`uvicorn app.main:app`)
-- [ ] `GET /health` returns `{"status": "healthy"}`
-- [ ] `POST /analyze/` returns detections for a sample X-ray
-- [ ] Frontend loads at `http://localhost:5173`
-- [ ] Image upload triggers analysis and shows results
-- [ ] Overlay image downloads correctly
-- [ ] No console errors in browser developer tools
+Follow [Semantic Versioning](https://semver.org/):
+- `MAJOR.MINOR.PATCH`
+- Breaking changes → MAJOR
+- New features → MINOR
+- Bug fixes → PATCH
 
----
+### Release Process
 
-## 📝 Pull Request Process
+1. Update `CHANGELOG.md`
+2. Create release branch: `release/vX.Y.Z`
+3. Update version in `pyproject.toml` / `package.json`
+4. Create PR to `main`
+5. After merge: tag and push: `git tag vX.Y.Z && git push --tags`
+6. GitHub Actions builds and publishes Docker images
 
-### 1. Create Your Branch
+## 🔒 Security
+
+### Reporting Vulnerabilities
+
+**Do NOT** create public issues for security vulnerabilities.
+
+Email: security@ericecek.com
+
+Include:
+- Description of vulnerability
+- Steps to reproduce
+- Potential impact
+- Suggested fix (if any)
+
+### Dependencies
+
+- Run `pip-audit` (Python) and `npm audit` (Node.js) regularly
+- Keep dependencies updated
+- Pin versions in production
+
+## 🏗️ Architecture Overview
+
+```
+dental-ai/
+├── backend/                    # FastAPI application
+│   ├── app/
+│   │   ├── api/routes/         # REST endpoints
+│   │   ├── core/               # Configuration
+│   │   ├── ml/                 # ML pipeline
+│   │   │   ├── detector.py     # YOLOv8 inference
+│   │   │   ├── preprocessor.py # CLAHE + denoising
+│   │   │   ├── reporter.py     # PDF reports
+│   │   │   ├── measurements.py # CEJ-bone crest mm
+│   │   │   └── gradcam.py      # Heatmaps
+│   │   └── models/             # Pydantic schemas
+│   ├── weights/                # YOLO model weights
+│   └── tests/                  # 138 pytest tests
+├── frontend/                   # React + TypeScript
+│   ├── src/
+│   │   ├── components/         # React components
+│   │   ├── hooks/              # Custom hooks
+│   │   ├── lib/                # Utilities
+│   │   └── pages/              # Page components
+│   └── package.json
+├── datasets/dentex/            # DENTEX dataset (local/Modal)
+├── .github/workflows/          # CI/CD pipelines
+├── docker-compose.yml          # Multi-container deployment
+├── Dockerfile                  # Production container
+└── README.md
+```
+
+## 🧬 ML Pipeline Details
+
+### Model
+- **Architecture:** YOLOv8x (Ultralytics)
+- **Classes:** 4 (Impacted, Caries, Periapical Lesion, Deep Caries)
+- **Input:** 1280×1280 panoramic X-rays
+- **Training:** DENTEX dataset (MICCAI 2023)
+
+### Training (Modal GPU)
 
 ```bash
-git checkout main
-git pull upstream main
-git checkout -b feat/your-feature-name
+# Upload dataset to Modal volume
+modal volume put dentex-dataset ./datasets/dentex /dentex
+
+# Run training
+modal run train_dentex_modal.py
+
+# Download best model
+modal volume get dentex-output /output/runs/detect/dentex_v1/weights/best.pt ./best.pt
 ```
 
-### 2. Make Your Changes
+### Inference
 
-- Write clean, well-documented code
-- Follow the code style guidelines above
-- Add or update tests if applicable
-- Update documentation if your change affects the API or user-facing features
+```python
+from app.ml.detector import Detector
 
-### 3. Commit & Push
-
-```bash
-git add .
-git commit -m "feat(scope): clear description of change"
-git push origin feat/your-feature-name
+detector = Detector(model_path="weights/yolov8x_dental.pt")
+detections = detector.predict(enhanced_image, conf=0.05)
 ```
 
-### 4. Open a Pull Request
+## 📊 Monitoring & Logging
 
-- Target the `main` branch
-- Use a descriptive title following commit message format
-- Fill out the PR description with:
-  - **What** does this change?
-  - **Why** is this change needed?
-  - **How** was this tested?
-  - **Screenshots** if UI changes are involved
+- **Structured logging:** JSON format
+- **Health check:** `GET /health` (includes model_loaded status)
+- **Metrics:** Prometheus-ready `/metrics` endpoint (planned)
+- **Tracing:** OpenTelemetry integration (planned)
 
-### 5. Code Review
+## 🤝 Community
 
-- A maintainer will review your PR
-- Address any requested changes
-- Once approved, your PR will be merged
+- **Issues:** GitHub Issues for bugs and features
+- **Discussions:** GitHub Discussions for questions
+- **Discord:** [Dental AI Community](https://discord.gg/dental-ai) (planned)
 
----
+## 📄 License
 
-## 🏥 Dental Domain Guidelines
-
-### Label Translations
-
-When adding UI text related to dental conditions, provide both English and Slovak labels:
-
-```typescript
-// In src/lib/labels.ts
-export const CLASS_LABELS_SK: Record<string, string> = {
-  'Caries': 'Kaz',
-  'Crown': 'Korunka',
-  'Filling': 'Plomba',
-  // ... etc
-};
-```
-
-### Severity Classification
-
-Maintain the three-tier severity system:
-- **Urgent** 🚨 — Requires immediate attention (Caries, Periapical Lesion)
-- **Treat Soon** ⚠️ — Should be addressed within weeks (Impacted Tooth, Missing Teeth)
-- **Watch** 👀 — Monitor over time (Crown, Filling, Implant)
-
-### Color Consistency
-
-Each detection class has a fixed color for overlays. When adding or modifying classes:
-
-1. Define the color in `backend/app/ml/detector.py` (`COLOR_MAP`)
-2. Ensure sufficient contrast against X-ray grayscale backgrounds
-3. Test with both bright and dark X-ray images
-4. Document the color choice in your PR description
+By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
 
 ---
 
-## 🐛 Reporting Bugs
+**Thank you for contributing to Dental AI!** 🦷
 
-When filing an issue, include:
-
-1. **Environment:** OS, Python version, Node version, browser
-2. **Steps to reproduce:** Clear, numbered steps
-3. **Expected behavior:** What should happen
-4. **Actual behavior:** What actually happens
-5. **Screenshots:** If applicable
-6. **Sample X-ray:** If the issue is ML-related (anonymized please)
-
----
-
-## 💡 Feature Requests
-
-We welcome ideas! When suggesting a feature:
-
-- Explain the **clinical use case** it would serve
-- Describe the **user workflow** step by step
-- Note any **similar features** in other dental AI tools
-- Consider **model performance** implications
-
----
-
-## ❓ Questions?
-
-Open a [GitHub Discussion](https://github.com/ericecek-code/dental-ai-fin/discussions) for questions, ideas, or general feedback.
-
----
-
-## 📜 Code of Conduct
-
-Be respectful, constructive, and professional. We're building tools to help dental professionals — let's keep that mission at the center of every interaction.
+*Questions? Open a [Discussion](https://github.com/ericecek-code/dental-ai-fin/discussions) or email contributors@ericecek.com*
