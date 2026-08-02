@@ -1,0 +1,46 @@
+# Dental AI - Cloud Training Configuration
+# Usage: python train_cloud.py --config config.yaml
+
+# Model configuration
+model: "yolov8x.pt"           # yolov8x.pt, yolov8m.pt, yolov8s.pt, yolov8n.pt
+epochs: 100
+imgsz: 1280
+batch: 16                      # Reduce to 8 if OOM on smaller GPUs
+device: 0                      # GPU device index (0 = first GPU)
+
+# Training hyperparameters
+patience: 20                   # Early stopping patience
+lr0: 0.01                      # Initial learning rate
+cos_lr: true                   # Cosine learning rate scheduler
+close_mosaic: 10               # Disable mosaic augmentation for last N epochs
+workers: 4                     # DataLoader workers
+amp: true                      # Automatic Mixed Precision
+cache: false                   # Cache images in RAM (set true if enough RAM)
+
+# Project structure
+project: "runs/detect"         # Output directory
+name: "dentex_v1"              # Run name
+save: true
+save_period: 10                # Save checkpoint every N epochs
+verbose: true
+
+# Data configuration
+data: "datasets/kaggle_dentex/dentex_yolo/data.yaml"
+download_data: true
+dataset: "dentex"
+dataset_source: "kaggle"
+
+# Cloud / Deployment
+export_onnx: true              # Export to ONNX after training
+upload_hf: false               # Upload to HuggingFace Hub
+hf_repo: "ericecek/dental-ai-models"
+# hf_token: set via HF_TOKEN environment variable
+
+# Cloud-specific overrides (auto-detected)
+# platform: auto-detect (kaggle, colab, runpod, local)
+# gpu: auto-detect
+# project path override per platform:
+#   kaggle: "/kaggle/working/runs/detect"
+#   colab: "/content/drive/MyDrive/dental-ai/runs/detect"
+#   runpod: "/workspace/runs/detect"
+#   local: "runs/detect"
