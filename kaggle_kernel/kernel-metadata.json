@@ -1,0 +1,14 @@
+{
+  "id": "eriksmite/dentex-v1-train",
+  "title": "Dentex V1 Train",
+  "code_file": "kaggle_train_dentex.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_competition_rental": false,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset": [
+    "truthisneverlinear/dentex-challenge-2023"
+  ],
+  "max_parallel_hours": 8
+}

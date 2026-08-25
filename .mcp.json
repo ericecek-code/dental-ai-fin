@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "zenith": {
+      "type": "stdio",
+      "command": "C:\\Users\\PC1\\Desktop\\zenith\\zenith\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m", "zenith_harness",
+        "--mode", "orchestrator"
+      ],
+      "env": {
+        "PYTHONPATH": "C:\\Users\\PC1\\Desktop\\zenith\\zenith\\.venv\\Lib\\site-packages",
+        "ZENITH_ORCHESTRATOR_PROVIDER": "hermes",
+        "ZENITH_WORKER_PROVIDER": "hermes",
+        "ZENITH_WORKER_ACP_COMMAND": "hermes acp"
+      }
+    }
+  }
+}

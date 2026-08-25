@@ -104,3 +104,24 @@ benchmark_results/
 
 # IDE
 .cursor/
+
+# Local-only data (backup exclusion) - added 2026-08-25
+datasets/
+kaggle_check/
+upload_temp/
+dental_yolo_v8-420/
+Dental-X-ray-1/
+restorative-ai-1/
+restorative-ai-bbox/
+verified_models/test_caries_only/
+verified_models/test_matched/
+.hermes/
+.agents/
+deer-flow/
+agno/
+kernel_out/
+*.tsbuildinfo
+.github_watch_sha
+frontend/tsconfig.tsbuildinfo
+agentos-docker/
+agent-ui/

@@ -1,0 +1,5 @@
+Ultralytics 8.4.128  Python-3.11.15 torch-2.13.0+cpu CPU (AMD Ryzen 5 1600 Six-Core Processor)
+Model summary (fused): 113 layers, 68,128,383 parameters, 0 gradients, 257.4 GFLOPs
+[34m[1mval: [0mFast image access  (ping: 0.10.0 ms, read: 65.434.5 MB/s, size: 28.4 KB)
+[K[34m[1mval: [0mScanning C:\Users\PC1\Desktop\dental-ai\mega-dataset\test\labels.cache... 871 images, 232 backgrounds, 0 corrupt: 100% ━━━━━━━━━━━━ 1103/1103  0.0s
+[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 1% ──────────── 1/69 232.3s/it 1:10<4:23:14[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 2% ──────────── 2/69 141.9s/it 2:24<2:38:29[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 4% ╸─────────── 3/69 129.6s/it 4:12<2:22:34[K                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 5% ╸─────────── 4/69 119.2s/it 5:52<2:09:09

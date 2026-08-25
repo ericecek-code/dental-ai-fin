@@ -1,0 +1,13 @@
+{
+  "id": "eriksmite/dental-yolov8-training",
+  "title": "Dental YOLOv8 Training - 10K Images",
+  "code_file": "kaggle_training.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": ["eriksmite/dental-mega-dataset"],
+  "competition_sources": [],
+  "kernel_sources": []
+}

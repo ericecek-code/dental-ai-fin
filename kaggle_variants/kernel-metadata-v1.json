@@ -1,0 +1,11 @@
+{
+  "id": "eriksmite/dental-yolov8-v1-full",
+  "title": "Dental YOLOv8s Full Train",
+  "code_file": "v1_full_train.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": ["eriksmite/mega-dataset-dental"]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "eriksmite/dental-yolov8-v2-fast",
+  "title": "Dental YOLOv8n Fast Train",
+  "code_file": "v2_fast_train.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": ["eriksmite/mega-dataset-dental"]
+}
