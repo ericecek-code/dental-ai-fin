@@ -1,0 +1,14 @@
+{
+  "title": "Dental Mega Dataset",
+  "id": "eriksmite/dental-mega-dataset",
+  "licenses": [{"name": "CC0-1.0"}],
+  "subtitle": "10,171 intraoral X-ray images for dental disease detection",
+  "description": "Merged dataset from Kaggle (oral-disease, dental-radiography, tooth-dataset) and Roboflow (dental_yolo_v8-420). 5 classes: Caries, Crown, Filling, Implant, Periapical-lesion. YOLO format with train/valid/test splits.",
+  "isPrivate": false,
+  "keywords": ["dental", "x-ray", "object-detection", "yolo", "caries", "crown", "filling", "implant", "periapical"],
+  "dataSources": [
+    "https://www.kaggle.com/datasets/imtkaggleteam/dental-radiography",
+    "https://www.kaggle.com/datasets/singh868/multi-class-oral-disease-detection-dataset",
+    "https://www.kaggle.com/datasets/alielhenidy/tooth-dataset"
+  ]
+}
