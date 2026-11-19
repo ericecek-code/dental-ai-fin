@@ -33,6 +33,8 @@ type AnalyzeResult = {
     class_id?: number;
   }>;
   conf_threshold: number;
+  filename?: string;
+  privacy?: { anonymized: boolean; removed?: string[]; reason?: string };
 };
 
 /** Health score comes from the backend (0..1) — the UI only scales it. */
@@ -269,6 +271,19 @@ const Results = () => {
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-dental-textMuted mb-3">
                   Export
                 </h3>
+                {yoloResult.privacy?.anonymized ? (
+                  <p className="mb-3 flex items-start gap-2 rounded-lg bg-emerald-500/10 px-2.5 py-2 text-[10px] leading-snug text-emerald-300">
+                    <span aria-hidden>🛡️</span>
+                    <span>
+                      Osobné údaje odstránené — metadáta, DICOM identifikátory a názov súboru.
+                    </span>
+                  </p>
+                ) : (
+                  <p className="mb-3 flex items-start gap-2 rounded-lg bg-amber-500/10 px-2.5 py-2 text-[10px] leading-snug text-amber-300">
+                    <span aria-hidden>⚠️</span>
+                    <span>Osobné údaje neboli odstránené (anonymizácia vypnutá).</span>
+                  </p>
+                )}
                 <div className="space-y-2">
                   <button
                     onClick={handleExportJson}

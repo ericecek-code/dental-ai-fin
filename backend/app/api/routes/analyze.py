@@ -1,4 +1,5 @@
 import json
+import logging
 import secrets
 import uuid
 from pathlib import Path
@@ -11,6 +12,7 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 import app.ml._dfloss_compat  # noqa: F401
 
 from app.core.config import settings
+from app.ml.anonymize import anonymize_upload
 from app.ml.image_io import decode_image_file
 from app.ml.preprocessor import ImageEnhancer
 from app.ml.detector import Detector
@@ -19,6 +21,8 @@ from app.ml.database import save_analysis
 from app.ml.scoring import health_score_fraction
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
+
+logger = logging.getLogger(__name__)
 
 UPLOAD_DIR = settings.data_path / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -124,6 +128,7 @@ def _draw_boxes(image: np.ndarray, detections):
 async def analyze_xray(
     file: UploadFile = File(...),
     conf: float = Query(default=settings.default_confidence),
+    anonymize: bool = Query(default=True),
 ):
     # Auth rieši AuthMiddleware cez X-API-Key / Bearer hlavičku (ak je API_TOKEN nastavený).
 
@@ -159,6 +164,21 @@ async def analyze_xray(
         # --- Empty file check ---
         if written == 0:
             raise HTTPException(status_code=400, detail="Empty file")
+
+        # --- Odstránenie osobných údajov (pred akýmkoľvek spracovaním) ---
+        privacy: dict = {"anonymized": False}
+        if anonymize:
+            anon = anonymize_upload(upload_path.read_bytes(), suffix)
+            if anon.ok:
+                upload_path.unlink(missing_ok=True)
+                suffix = anon.suffix
+                upload_path = UPLOAD_DIR / f"{job_id}{suffix}"
+                upload_path.write_bytes(anon.data)
+                # Názov súboru často obsahuje meno pacienta -> nahradíme ID úlohy
+                safe_filename = f"{job_id}{suffix}"
+                privacy = {"anonymized": True, "removed": anon.removed}
+            else:
+                privacy = {"anonymized": False, "reason": "anonymization_failed"}
 
         # --- Image decode validation (OpenCV, s fallbackom na DICOM) ---
         image = decode_image_file(str(upload_path))
@@ -204,6 +224,7 @@ async def analyze_xray(
             "access_token": access_token,
             "status": "done",
             "filename": safe_filename,
+            "privacy": privacy,
             "conf_threshold": conf,
             "enhanced_image_path": str(enhanced_path),
             "overlay_path": str(overlay_path),
@@ -226,11 +247,13 @@ async def analyze_xray(
         return result
 
     except HTTPException:
-        # --- Cleanup pri chybe (úspešný job má vlastný JSON, takže upload netreba) ---
-        if not (OUTPUT_DIR / f"{job_id}.json").exists():
-            upload_path.unlink(missing_ok=True)
         raise
-    except Exception:
-        # --- Cleanup pri neočakávanej chybe ---
-        upload_path.unlink(missing_ok=True)
+    except Exception as exc:
+        logger.exception("Analysis failed: %s", exc)
         raise HTTPException(status_code=500, detail="Internal analysis error")
+    finally:
+        # Surový upload (aj s metadátami) nesmie zostať na disku.
+        try:
+            upload_path.unlink(missing_ok=True)
+        except OSError:
+            pass

@@ -165,14 +165,16 @@ class TestAnalyzeEndpoint:
 
     @patch("app.api.routes.analyze.detector", _mock_detector())
     @patch("app.api.routes.analyze.enhancer", _mock_enhancer())
-    def test_analyze_preserves_filename(self, client, sample_png_bytes):
-        """Response should echo back the original filename."""
+    def test_analyze_anonymizes_filename(self, client, sample_png_bytes):
+        """Odpoveď nesmie obsahovať pôvodný názov súboru (môže obsahovať meno)."""
         response = client.post(
             "/analyze/",
             files={"file": ("patient_42.png", io.BytesIO(sample_png_bytes), "image/png")},
         )
         data = response.json()
-        assert data["filename"] == "patient_42.png"
+        assert data["filename"] == f"{data['job_id']}.png"
+        assert "patient_42" not in data["filename"]
+        assert data["privacy"]["anonymized"] is True
 
 
 class TestAnalyzeHelperFunctions:
