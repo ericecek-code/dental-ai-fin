@@ -15,12 +15,10 @@ services:
     healthCheckPath: /health
     autoDeploy: true
     envVars:
-      - key: API_TOKEN
-        generateValue: true
+      # Bez kľúča: API_TOKEN sa nenastavuje -> AuthMiddleware je vypnutá (verejné demo).
+      # Pred produkčným nasadením doplň API_TOKEN a CORS_ORIGINS s konkrétnou doménou.
       - key: CORS_ORIGINS
         value: '["*"]'
-      - key: GEMINI_API_KEY
-        sync: false
       - key: LOG_LEVEL
         value: INFO
       - key: UPLOAD_MAX_SIZE_MB
