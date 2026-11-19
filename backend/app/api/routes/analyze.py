@@ -1,28 +1,29 @@
-import os
+import json
+import secrets
+import uuid
+from pathlib import Path
+
+import cv2
+import numpy as np
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+
 # Patch DFLoss before any ultralytics import
 import app.ml._dfloss_compat  # noqa: F401
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query
-from pathlib import Path
-import uuid
-import shutil
-import json
-import secrets
-import cv2
-import numpy as np
-
 from app.core.config import settings
+from app.ml.image_io import decode_image_file
 from app.ml.preprocessor import ImageEnhancer
 from app.ml.detector import Detector
 from app.ml.measurements import DentalMeasurement
 from app.ml.database import save_analysis
+from app.ml.scoring import health_score_fraction
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
-UPLOAD_DIR = Path("/tmp/dental-ai/uploads")
+UPLOAD_DIR = settings.data_path / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-OUTPUT_DIR = Path("/tmp/dental-ai/outputs")
+OUTPUT_DIR = settings.data_path / "outputs"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm"}
@@ -32,30 +33,8 @@ ALLOWED_CONTENT_TYPES = {
 }
 
 enhancer = ImageEnhancer()
-detector = Detector(model_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "weights", "yolov8x_dental.pt"))
+detector = Detector(model_path=str(settings.weights_path))
 measurer = DentalMeasurement()
-
-
-def _patch_torch_weights_only() -> None:
-    try:
-        import torch
-        try:
-            from ultralytics.nn.tasks import DetectionModel
-            torch.serialization.add_safe_globals([DetectionModel])
-        except Exception:
-            pass
-        _orig_load = torch.load
-
-        def _patched_load(*args, **kwargs):
-            kwargs.setdefault("weights_only", False)
-            return _orig_load(*args, **kwargs)
-
-        torch.load = _patched_load
-    except Exception:
-        pass
-
-
-_patch_torch_weights_only()
 
 
 # ---------------------------------------------------------------------------
@@ -113,15 +92,14 @@ def _draw_boxes(image: np.ndarray, detections):
         x1, y1 = max(x1, 0), max(y1, 0)
         x2, y2 = min(x2, out.shape[1]), min(y2, out.shape[0])
 
-        severity = det.get("severity", "watch")
-        bgr = _severity_color(severity)
+        bgr = tuple(det.get("color_bgr") or _severity_color(det.get("severity", "watch")))
         fill_bgr = bgr
 
         _rounded_rect(out, (x1, y1), (x2, y2),
                       color=bgr, thickness=2, radius=8,
                       fill_color=fill_bgr, fill_alpha=0.18)
 
-        label = det.get("label", "")
+        label = det.get("label_sk") or det.get("label", "")
         confidence = det.get("confidence", 0.0)
         tooth = det.get("tooth_number", "")
         text = f"{label} {confidence:.2f}"
@@ -141,16 +119,13 @@ def _draw_boxes(image: np.ndarray, detections):
 # Endpoints
 # ---------------------------------------------------------------------------
 
+@router.post("", include_in_schema=False)
 @router.post("/")
 async def analyze_xray(
     file: UploadFile = File(...),
-    conf: float = Query(default=0.05),
-    token: str | None = Query(default=None),
+    conf: float = Query(default=settings.default_confidence),
 ):
-    # --- Auth: ak je API_TOKEN nastavený, vyžaduj ho ---
-    if settings.api_token and settings.api_token != "replace-with-generated-token":
-        if token != settings.api_token:
-            raise HTTPException(status_code=403, detail="Invalid or missing API token")
+    # Auth rieši AuthMiddleware cez X-API-Key / Bearer hlavičku (ak je API_TOKEN nastavený).
 
     # --- Validácia typu súboru (extension) ---
     suffix = Path(file.filename).suffix.lower()
@@ -168,23 +143,25 @@ async def analyze_xray(
     upload_path = UPLOAD_DIR / f"{job_id}{suffix}"
 
     try:
+        # --- Upload size limit (streaming, aby sa disk nezaplnil pred kontrolou) ---
+        max_bytes = settings.upload_max_size_mb * 1024 * 1024
+        written = 0
         with upload_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        # --- Upload size limit ---
-        file_size_mb = upload_path.stat().st_size / (1024 * 1024)
-        if file_size_mb > settings.upload_max_size_mb:
-            raise HTTPException(
-                status_code=413,
-                detail=f"File too large: {file_size_mb:.1f} MB (max {settings.upload_max_size_mb} MB)",
-            )
+            while chunk := file.file.read(1024 * 1024):
+                written += len(chunk)
+                if written > max_bytes:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File too large (max {settings.upload_max_size_mb} MB)",
+                    )
+                buffer.write(chunk)
 
         # --- Empty file check ---
-        if upload_path.stat().st_size == 0:
+        if written == 0:
             raise HTTPException(status_code=400, detail="Empty file")
 
-        # --- Image decode validation (magic bytes + OpenCV) ---
-        image = cv2.imdecode(np.fromfile(str(upload_path), dtype=np.uint8), cv2.IMREAD_COLOR)
+        # --- Image decode validation (OpenCV, s fallbackom na DICOM) ---
+        image = decode_image_file(str(upload_path))
         if image is None:
             raise HTTPException(status_code=400, detail="Unreadable image or invalid image data")
 
@@ -214,13 +191,12 @@ async def analyze_xray(
         # --- Measurements (mm) ---
         measurements = measurer.measure_cej_to_bone_crest(enhanced, detections)
 
-        # --- Health score (simple heuristic) ---
-        urgent = sum(1 for d in detections if d.get("severity") == "urgent")
-        treat = sum(1 for d in detections if d.get("severity") == "treat_soon")
-        total = len(detections) or 1
-        health_score = max(0.0, 1.0 - (urgent * 0.3 + treat * 0.15) / total)
+        # --- Health score (jedna implementácia: app.ml.scoring) ---
+        health_score = health_score_fraction(detections)
 
         # --- Access token pre results ---
+        # Per-job token sa už nevyžaduje (ochranu rieši API_TOKEN); pole zostáva
+        # pre spätnú kompatibilitu klientov, ktorí ho čítajú.
         access_token = secrets.token_urlsafe(16)
 
         result = {
@@ -239,7 +215,7 @@ async def analyze_xray(
         }
 
         json_path = OUTPUT_DIR / f"{job_id}.json"
-        json_path.write_text(json.dumps(result, indent=2))
+        json_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
 
         # --- Persist to SQLite ---
         try:
@@ -250,8 +226,8 @@ async def analyze_xray(
         return result
 
     except HTTPException:
-        # --- Cleanup pri chybe (neodstraňuj úspešné joby) ---
-        if upload_path.exists() and not OUTPUT_DIR.exists():
+        # --- Cleanup pri chybe (úspešný job má vlastný JSON, takže upload netreba) ---
+        if not (OUTPUT_DIR / f"{job_id}.json").exists():
             upload_path.unlink(missing_ok=True)
         raise
     except Exception:

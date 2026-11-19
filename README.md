@@ -4,7 +4,7 @@ emoji: 🦷
 colorFrom: blue
 colorTo: green
 sdk: docker
-app_port: 7860
+app_port: 8000
 pinned: false
 tags:
   - dental
@@ -37,7 +37,7 @@ Dental AI is an end-to-end dental X-ray analysis platform that leverages YOLOv8 
 
 ## ✨ Features
 
-- **4 Key Diagnoses Detected** — Impacted, Caries, Periapical Lesion, Deep Caries (trained on DENTEX dataset)
+- **5 Key Diagnoses Detected** — Caries, Crown, Filling, Implant, Periapical Lesion (trained on DENTEX dataset)
 - **Color-Coded Overlays** — Each condition rendered with distinct color + severity (urgent / treat soon / watch)
 - **Interactive Canvas Viewer** — Zoom (mouse wheel), pan (drag), fullscreen, CLAHE/pseudocolor/heatmap modes
 - **Millimeter Measurements** — CEJ-to-bone-crest periodontal measurements per tooth
@@ -47,7 +47,6 @@ Dental AI is an end-to-end dental X-ray analysis platform that leverages YOLOv8 
 - **Odontogram** — FDI notation (11-48) with color-coded tooth status
 - **Confidence Threshold Control** — Adjustable sensitivity slider (0.01–0.95)
 - **WebSocket Progress** — Real-time analysis progress tracking
-- **DICOM Support** — Read standard medical imaging format files
 
 ---
 
@@ -61,7 +60,7 @@ cd dental-ai
 docker compose up --build
 ```
 
-Open `http://localhost:7860` in your browser.
+Open `http://localhost:8000` in your browser.
 
 ### Local Development
 
@@ -90,11 +89,14 @@ cd dental-ai/frontend
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (Vite dev server on port 5173)
 npm run dev -- --host 127.0.0.1 --port 5173
+
+# Production build (served on port 3000 via nginx)
+npm run build
 ```
 
-Open `http://localhost:5173` — the React app proxies API calls to the backend on port 8000.
+Open `http://localhost:5173` (dev) or `http://localhost:3000` (prod) — the React app proxies API calls to the backend on port 8000.
 
 ---
 
@@ -119,7 +121,7 @@ Open `http://localhost:5173` — the React app proxies API calls to the backend 
 │  ┌────▼──────────────▼──────────────────────────────────┐  │
 │  │                    ML Pipeline                        │  │
 │  │  Preprocessor → YOLOv8 Detector → Postprocessor      │  │
-│  │  (CLAHE)       (4 classes)      (severity/overlay)   │  │
+│  │  (CLAHE)       (5 classes)      (severity/overlay)   │  │
 │  └──────────────────────────────────────────────────────┘  │
 │                                                             │
 │  ┌──────────────┐ ┌──────────────┐ ┌────────────────────┐ │
@@ -135,7 +137,7 @@ Open `http://localhost:5173` — the React app proxies API calls to the backend 
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| **ML Model** | YOLOv8x (Ultralytics) | Object detection — 4 dental diagnoses |
+| **ML Model** | YOLOv8x (Ultralytics) | Object detection — 5 dental diagnoses |
 | **Backend** | Python 3.11 + FastAPI | REST API, WebSocket, file handling |
 | **Preprocessing** | OpenCV (CLAHE, denoising) | Image enhancement before inference |
 | **Explainability** | Grad-CAM | Visual heatmaps of model attention |
@@ -178,9 +180,10 @@ curl -X POST "http://localhost:8000/analyze/?conf=0.05" \
   "detection_count": 12,
   "by_class": {
     "Caries": { "count": 5, "max_conf": 0.78, "severity": "urgent" },
-    "Deep Caries": { "count": 2, "max_conf": 0.85, "severity": "urgent" },
-    "Periapical Lesion": { "count": 3, "max_conf": 0.72, "severity": "treat_soon" },
-    "Impacted": { "count": 2, "max_conf": 0.65, "severity": "watch" }
+    "Crown": { "count": 2, "max_conf": 0.82, "severity": "watch" },
+    "Filling": { "count": 1, "max_conf": 0.75, "severity": "normal" },
+    "Implant": { "count": 2, "max_conf": 0.88, "severity": "watch" },
+    "Periapical Lesion": { "count": 2, "max_conf": 0.72, "severity": "treat_soon" }
   },
   "detections": [
     {
@@ -189,7 +192,7 @@ curl -X POST "http://localhost:8000/analyze/?conf=0.05" \
       "bbox": [120, 200, 180, 260],
       "severity": "urgent",
       "tooth_number": "36",
-      "class_id": 1
+      "class_id": 0
     }
   ],
   "measurements": [
@@ -213,26 +216,27 @@ curl -X POST "http://localhost:8000/analyze/?conf=0.05" \
 |--------|-------|
 | **Model Architecture** | YOLOv8x (extra-large) |
 | **Training Dataset** | DENTEX (705 train, 46 val, 250 test) |
-| **Classes** | 4 diagnoses: Impacted, Caries, Periapical Lesion, Deep Caries |
+| **Classes** | 5 diagnoses: Caries, Crown, Filling, Implant, Periapical Lesion |
 | **Image Resolution** | 1280×1280 |
 | **Training Hardware** | NVIDIA A10G (Modal) |
 | **Target mAP50** | ≥ 0.50 |
 | **Target Recall (Caries)** | ≥ 0.65 |
 
-### 4 Detection Classes
+### 5 Detection Classes
 
 | # | Class | Slovak | Color | Severity |
 |---|-------|--------|-------|----------|
-| 0 | Impacted | Retinovaný zub | 🟠 Orange | Watch |
-| 1 | Caries | Kaz | 🔴 Red | Urgent |
-| 2 | Periapical Lesion | Periapikálna lézia | 🟣 Purple | Treat Soon |
-| 3 | Deep Caries | Hlbokejší kaz | 🔴 Dark Red | Urgent |
+| 0 | Caries | Kaz | 🔴 Red | Urgent |
+| 1 | Crown | Korunka | 🟠 Orange | Watch |
+| 2 | Filling | Plomba | 🟢 Green | Normal |
+| 3 | Implant | Implantát | 🔵 Blue | Watch |
+| 4 | Periapical Lesion | Periapikálna lézia | 🟣 Purple | Treat Soon |
 
 ### Dataset Source
 
 | Dataset | Source | Images | Classes |
 |---------|--------|:------:|:-------:|
-| **DENTEX** | MICCAI 2023 Challenge | 1,005 (705/46/250 split) | 4 diagnoses + FDI |
+| **DENTEX** | MICCAI 2023 Challenge | 1,005 (705/46/250 split) | 5 diagnoses + FDI |
 | **Validation** | Manual expert annotation | Hierarchical (quadrant + tooth + diagnosis) | |
 
 ---
@@ -240,7 +244,7 @@ curl -X POST "http://localhost:8000/analyze/?conf=0.05" \
 ## 🗺️ Roadmap
 
 ### Phase 1 — Foundation ✅
-- YOLOv8 inference pipeline with 4 classes
+- YOLOv8 inference pipeline with 5 classes
 - FastAPI backend with REST endpoints
 - React frontend with canvas overlay viewer
 - Docker deployment

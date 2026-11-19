@@ -20,9 +20,11 @@ const API_BASE = window.location.origin;
 type AnalyzeResult = {
   job_id: string;
   detection_count: number;
+  health_score?: number;
   by_class: Record<string, { count: number; max_conf: number; severity: string }>;
   detections: Array<{
     label: string;
+    label_sk?: string;
     confidence: number;
     bbox: number[];
     severity: string;
@@ -33,21 +35,34 @@ type AnalyzeResult = {
   conf_threshold: number;
 };
 
-/** Compute health score from detection results (lower findings = higher score) */
+/** Health score comes from the backend (0..1) — the UI only scales it. */
 function computeHealthScore(result: AnalyzeResult | null): number {
-  if (!result || result.detection_count === 0) return 100;
+  if (!result) return 100;
+  const raw = result.health_score;
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return Math.max(0, Math.min(100, Math.round(raw * 100)));
+  }
+  return 100;
+}
 
-  const total = result.detection_count;
-  const urgent = Object.values(result.by_class).filter((v) => v.severity === 'urgent').length;
-  const treatSoon = Object.values(result.by_class).filter((v) => v.severity === 'treat_soon').length;
-
-  // Base score starts at 100, deduct for findings
-  let score = 100;
-  score -= Math.min(total * 3, 40);   // up to -40 for total findings
-  score -= urgent * 10;                // -10 per urgent class
-  score -= treatSoon * 5;              // -5 per treat_soon class
-
-  return Math.max(0, Math.min(100, Math.round(score)));
+/** Download a file through fetch so auth headers can be attached. */
+async function downloadFile(url: string, filename: string) {
+  const token = localStorage.getItem('api_token');
+  const response = await fetch(url, {
+    headers: token ? { 'X-API-Key': token } : undefined,
+  });
+  if (!response.ok) {
+    throw new Error(`Export failed: HTTP ${response.status}`);
+  }
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
 }
 
 const Results = () => {
@@ -59,7 +74,7 @@ const Results = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('clinical');
   const [imageMode, setImageMode] = useState<'original' | 'enhanced' | 'pseudocolor' | 'heatmap'>('original');
   const [colormap, setColormap] = useState('bone');
-  const [hoveredDetection, setHoveredDetection] = useState<number | null>(null);
+  const [, setHoveredDetection] = useState<number | null>(null);
 
   // New state: comparison view toggle
   const [showComparison, setShowComparison] = useState(false);
@@ -80,8 +95,9 @@ const Results = () => {
           setYoloResult(data as AnalyzeResult);
           setStatus('done');
         },
-        onError: (err: any) => {
-          setError(err?.response?.data?.detail || err?.message);
+        onError: (err: unknown) => {
+          const e = err as { response?: { data?: { detail?: string } }; message?: string };
+          setError(e?.response?.data?.detail || e?.message || 'Analýza zlyhala');
           setStatus('error');
         },
       },
@@ -109,18 +125,20 @@ const Results = () => {
 
   const healthScore = useMemo(() => computeHealthScore(yoloResult), [yoloResult]);
 
-  // Export handlers
+  // Export handlers — idú cez fetch, aby fungovali aj s API_TOKEN
   const handleExportJson = () => {
     if (!yoloResult) return;
-    window.open(`${API_BASE}/history/${yoloResult.job_id}/json`, '_blank');
+    downloadFile(`${API_BASE}/results/${yoloResult.job_id}/json`, `${yoloResult.job_id}.json`)
+      .catch((err) => setError(err.message));
   };
 
   const handleExportCsv = () => {
     if (!yoloResult) return;
-    window.open(`${API_BASE}/history/${yoloResult.job_id}/csv`, '_blank');
+    downloadFile(`${API_BASE}/results/${yoloResult.job_id}/csv`, `${yoloResult.job_id}.csv`)
+      .catch((err) => setError(err.message));
   };
 
-  const handleSaveAnnotations = (annotations: any[]) => {
+  const handleSaveAnnotations = (annotations: unknown[]) => {
     // Store annotations (could be sent to backend in future)
     console.log('Saved annotations:', annotations);
   };
@@ -290,7 +308,6 @@ const Results = () => {
                 <ComparisonView
                   originalUrl={yoloResult ? `${API_BASE}/results/${yoloResult.job_id}/original` : undefined}
                   enhancedUrl={yoloResult ? `${API_BASE}/results/${yoloResult.job_id}/enhanced` : undefined}
-                  detections={mappedDetections}
                 />
                 {/* Detection overlay list in comparison mode */}
                 {mappedDetections.length > 0 && (
@@ -387,11 +404,15 @@ const Results = () => {
 
                         {/* PDF Export Button */}
                         {yoloResult && (
-                          <a
+                          <button
+                            type="button"
                             className="glass-panel flex items-center justify-center gap-2 p-3 text-sm font-semibold text-dental-primary hover:bg-dental-primary/10 transition-all duration-200 box-glow-teal"
-                            href={`${API_BASE}/results/${yoloResult.job_id}/report`}
-                            target="_blank"
-                            rel="noreferrer"
+                            onClick={() => {
+                              downloadFile(
+                                `${API_BASE}/results/${yoloResult.job_id}/report`,
+                                `${yoloResult.job_id}.pdf`,
+                              ).catch((err) => setError(err.message));
+                            }}
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -401,7 +422,7 @@ const Results = () => {
                               <polyline points="10 9 9 9 8 9" />
                             </svg>
                             Stiahnuť PDF report
-                          </a>
+                          </button>
                         )}
 
                         {/* AI Disclaimer */}

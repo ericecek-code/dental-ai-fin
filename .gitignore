@@ -1,72 +1,33 @@
-# Virtual environments
+# --- Virtual environments ---------------------------------------------------
 .venv/
 venv/
 env/
 
-# Node
+# --- Node -------------------------------------------------------------------
 node_modules/
 frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
 
-# Byte-compiled / optimized / DLL files
+# --- Python bytecode / cache ------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-/lib/
-/lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
 .coverage.*
-.cache
-nosetests.xml
+htmlcov/
 coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# --- Tajné a lokálne konfiguráky (NIKDY necommitovať) -----------------------
+.env
+.env.*
+!.env.example
 
-# pyenv
-.python-version
-
-# mypy
-.mypy_cache/
-.dmypy.json
-
-# VS Code
-.vscode/
-
-# PyCharm
-.idea/
-
-# User uploads and outputs
+# --- Runtime dáta -----------------------------------------------------------
 uploads/
 enhanced/
 detected/
@@ -74,8 +35,11 @@ runs/
 output.png
 input.jpg
 input2.jpg
+dental_ai.db
+backend/static/
+backend/${Root}/
 
-# Model weights - blokuj vsetko okrem backend/weights/
+# --- Model weights: všetko okrem produkčných váh v backend/weights ----------
 *.pt
 !backend/weights/*.pt
 *.bin
@@ -83,45 +47,42 @@ input2.jpg
 realesrgan-ncnn-vulkan.exe
 vcomp140d.dll
 
-# System files
+# --- System files -----------------------------------------------------------
 .DS_Store
 Thumbs.db
 
-# Datasets (too large for git)
+# --- Datasety (príliš veľké pre git) ---------------------------------------
+datasets/
 mega-dataset/
 mega-dataset.zip
 combined-dataset/
 combined-dataset-v2/
-
-# Training artifacts
-*.pt
-!backend/weights/*.pt
-runs/
-benchmark_results/
-
-# Logs
-*.log
-
-# IDE
-.cursor/
-
-# Local-only data (backup exclusion) - added 2026-08-25
-datasets/
-kaggle_check/
-upload_temp/
 dental_yolo_v8-420/
 Dental-X-ray-1/
 restorative-ai-1/
 restorative-ai-bbox/
+kaggle_check/
+kernel_out/
+upload_temp/
 verified_models/test_caries_only/
 verified_models/test_matched/
+coco-dental-31class.zip
+yolov8x.pt
+
+# --- Tréningové a benchmark artefakty --------------------------------------
+benchmark_results/
+*.log
+
+# --- IDE / lokálne nástroje -------------------------------------------------
+.vscode/
+.idea/
+.cursor/
 .hermes/
 .agents/
-deer-flow/
-agno/
-kernel_out/
-*.tsbuildinfo
-.github_watch_sha
-frontend/tsconfig.tsbuildinfo
-agentos-docker/
+.agentos/
 agent-ui/
+agentos-docker/
+agno/
+deer-flow/
+deploy_git/
+.github_watch_sha

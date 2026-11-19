@@ -32,17 +32,6 @@ type ComparisonResult = {
   };
 };
 
-type GeminiDetection = {
-  label: string;
-  tooth?: string;
-  quadrant?: number;
-  location: string;
-  confidence: number;
-  severity: string;
-  description: string;
-  bbox: number[] | null;
-};
-
 type Props = {
   comparison: ComparisonResult;
   geminiAssessment?: string;

@@ -1,4 +1,4 @@
-"""Tests for the /results endpoints."""
+﻿"""Tests for the /results endpoints."""
 
 import io
 import json
@@ -22,7 +22,7 @@ class TestGetResults:
     def test_get_results_returns_json(self, client):
         """GET /results/{id} should return JSON content type."""
         response = client.get("/results/some_id")
-        assert response.status_code == 404  # unknown job → 404
+        assert response.status_code == 404  # unknown job â†’ 404
 
 
 class TestGetOriginal:
@@ -33,7 +33,7 @@ class TestGetOriginal:
         response = client.get("/results/nonexistent/original")
         assert response.status_code == 404
 
-    def test_original_returns_png_when_exists(self, client, tmp_output_dir):
+    def test_original_returns_jpeg_when_exists(self, client, tmp_output_dir):
         """GET /results/{id}/original returns PNG image when file exists."""
         # Create a fake enhanced image file
         img = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
@@ -44,9 +44,9 @@ class TestGetOriginal:
         with patch("app.api.routes.results.OUTPUT_DIR", tmp_output_dir):
             response = client.get(f"/results/{job_id}/original")
         assert response.status_code == 200
-        assert response.headers["content-type"] == "image/png"
-        # Verify the returned bytes are a valid PNG
-        assert response.content[:4] == b'\x89PNG'
+        assert response.headers["content-type"] == "image/jpeg"
+        # Verify the returned bytes are a valid JPEG
+        assert response.content[:3] == b"\xff\xd8\xff"
 
 
 class TestGetOverlay:
@@ -57,7 +57,7 @@ class TestGetOverlay:
         response = client.get("/results/nonexistent/overlay")
         assert response.status_code == 404
 
-    def test_overlay_returns_png_when_exists(self, client, tmp_output_dir):
+    def test_overlay_returns_jpeg_when_exists(self, client, tmp_output_dir):
         """GET /results/{id}/overlay returns PNG when file exists."""
         img = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
         job_id = "test_overlay_001"
@@ -67,7 +67,7 @@ class TestGetOverlay:
         with patch("app.api.routes.results.OUTPUT_DIR", tmp_output_dir):
             response = client.get(f"/results/{job_id}/overlay")
         assert response.status_code == 200
-        assert response.headers["content-type"] == "image/png"
+        assert response.headers["content-type"] == "image/jpeg"
 
 
 class TestGetEnhanced:
@@ -78,7 +78,7 @@ class TestGetEnhanced:
         response = client.get("/results/nonexistent/enhanced")
         assert response.status_code == 404
 
-    def test_enhanced_returns_png_when_exists(self, client, tmp_output_dir):
+    def test_enhanced_returns_jpeg_when_exists(self, client, tmp_output_dir):
         """GET /results/{id}/enhanced returns PNG when file exists."""
         img = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
         job_id = "test_enh_001"
@@ -88,7 +88,7 @@ class TestGetEnhanced:
         with patch("app.api.routes.results.OUTPUT_DIR", tmp_output_dir):
             response = client.get(f"/results/{job_id}/enhanced")
         assert response.status_code == 200
-        assert response.headers["content-type"] == "image/png"
+        assert response.headers["content-type"] == "image/jpeg"
 
 
 class TestGetPseudocolor:
@@ -99,7 +99,7 @@ class TestGetPseudocolor:
         response = client.get("/results/nonexistent/pseudocolor")
         assert response.status_code == 404
 
-    def test_pseudocolor_returns_png_when_exists(self, client, tmp_output_dir):
+    def test_pseudocolor_returns_jpeg_when_exists(self, client, tmp_output_dir):
         """GET /results/{id}/pseudocolor returns a colored PNG."""
         img = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
         job_id = "test_pseudo_001"
@@ -109,7 +109,7 @@ class TestGetPseudocolor:
         with patch("app.api.routes.results.OUTPUT_DIR", tmp_output_dir):
             response = client.get(f"/results/{job_id}/pseudocolor?colormap=bone")
         assert response.status_code == 200
-        assert response.headers["content-type"] == "image/png"
+        assert response.headers["content-type"] == "image/jpeg"
 
     def test_pseudocolor_invalid_colormap_defaults(self, client, tmp_output_dir):
         """GET /results/{id}/pseudocolor with unknown colormap defaults to bone."""
@@ -131,7 +131,7 @@ class TestGetHeatmap:
         response = client.get("/results/nonexistent/heatmap")
         assert response.status_code == 404
 
-    def test_heatmap_returns_png_when_exists(self, client, tmp_output_dir):
+    def test_heatmap_returns_jpeg_when_exists(self, client, tmp_output_dir):
         """GET /results/{id}/heatmap returns PNG when job files exist."""
         img = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
         job_id = "test_heatmap_001"
@@ -153,7 +153,7 @@ class TestGetHeatmap:
         with patch("app.api.routes.results.OUTPUT_DIR", tmp_output_dir):
             response = client.get(f"/results/{job_id}/heatmap")
         assert response.status_code == 200
-        assert response.headers["content-type"] == "image/png"
+        assert response.headers["content-type"] == "image/jpeg"
 
 
 class TestGetReport:

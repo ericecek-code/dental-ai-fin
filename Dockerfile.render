@@ -1,0 +1,59 @@
+# =============================================================================
+# Dental AI - Production Dockerfile for Render.com / Free Tier Deployment
+# =============================================================================
+# Build:  docker build -f Dockerfile.render -t dental-ai .
+# Run:    docker run -p 8000:8000 --env-file backend/.env dental-ai
+
+# ---------- Stage 1: Frontend build ----------
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+# ---------- Stage 2: Backend + Runtime ----------
+FROM python:3.11-slim AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    YOLO_VERBOSE=False
+
+WORKDIR /app/backend
+
+# System dependencies for OpenCV (headless) – libgl1 on Debian bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# CPU-only torch first, so ultralytics does not pull ~2.5 GB of CUDA wheels
+RUN pip install --upgrade pip \
+    && pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# Python dependencies
+COPY backend/requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copy backend application code (weights filtered by .dockerignore)
+COPY backend/ ./
+
+# Copy built frontend static files into backend/static
+COPY --from=frontend-builder /app/frontend/dist ./static
+
+# Runtime directories + non-root user
+RUN mkdir -p /tmp/dental-ai/uploads /tmp/dental-ai/outputs /tmp/dental-ai/reports \
+    && useradd --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app /tmp/dental-ai
+
+USER appuser
+
+# Render injects $PORT; EXPOSE is documentation only
+EXPOSE 8000
+
+# Healthcheck must follow $PORT, not a hardcoded 8000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import os,urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\", \"8000\")}/health', timeout=5)"
+
+# Run backend (serves API + static frontend)
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

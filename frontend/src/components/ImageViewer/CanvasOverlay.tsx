@@ -36,7 +36,7 @@ function getCariesLabel(confidence: number): string {
   if (confidence < 0.6) return "Stredný kaz";
   return "Závažný kaz";
 }
-function getCariesLabelPatient(_confidence: number): string {
+function getCariesLabelPatient(): string {
   return "Kaz";
 }
 function getSeverityColor(severity?: string): string {
@@ -239,7 +239,7 @@ export default function CanvasOverlay({
 
           const color = isCaries ? getCariesColor(conf) : getSeverityColor(det.severity);
           const label = isCaries
-            ? (viewMode === "patient" ? getCariesLabelPatient(conf) : getCariesLabel(conf))
+            ? (viewMode === "patient" ? getCariesLabelPatient() : getCariesLabel(conf))
             : (det.class_name ?? "Nález");
           const isUrgent = det.severity === "urgent";
           const glowBlur = isUrgent ? 16 * (0.7 + 0.3 * Math.sin(now * 0.004)) : 10;

@@ -1,0 +1,26 @@
+# Render Blueprint — jednoklikový deploy z GitHub repozitára.
+# https://render.com/deploy?repo=https://github.com/ericecek-code/dental-ai-fin
+#
+# POZOR na pamäť: yolov8x (368 MB váh) + PyTorch potrebujú ~1,5 GB RAM.
+# Free tier (512 MB) pri prvom /analyze spadne na OOM, preto je tu "starter".
+services:
+  - type: web
+    name: dental-ai
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    plan: starter
+    region: frankfurt
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: API_TOKEN
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: '["*"]'
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
+      - key: UPLOAD_MAX_SIZE_MB
+        value: "50"

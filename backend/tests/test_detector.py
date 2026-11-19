@@ -15,17 +15,23 @@ class TestColorMap:
     """Verify the COLOR_MAP dictionary covers all expected dental classes."""
 
     EXPECTED_CLASSES = [
-        "Caries", "Deep Caries", "Crown", "Implant", "Malaligned",
+        # triedy reálneho modelu (weights/yolov8x_dental.pt, 31 tried)
+        "Caries", "Crown", "Filling", "Implant", "Malaligned",
         "Mandibular Canal", "Missing teeth", "Periapical lesion",
         "Retained root", "Root Canal Treatment", "Root Piece",
-        "impacted tooth", "Impacted tooth", "Filling", "plating",
-        "wire", "Cyst", "Root resorption", "Primary teeth",
+        "impacted tooth", "maxillary sinus", "Bone Loss", "Fracture teeth",
+        "Permanent Teeth", "Supra Eruption", "TAD", "abutment", "attrition",
+        "bone defect", "gingival former", "metal band", "orthodontic brackets",
+        "permanent retainer", "post - core", "plating", "wire", "Cyst",
+        "Root resorption", "Primary teeth",
+        # aliasy pre modely s iným zápisom názvu
+        "Deep Caries", "Impacted tooth",
     ]
 
-    def test_color_map_has_19_entries(self):
-        """COLOR_MAP should have exactly 19 entries."""
+    def test_color_map_covers_all_model_classes(self):
+        """Taxonómia musí pokryť všetkých 31 tried modelu + aliasy."""
         from app.ml.detector import COLOR_MAP
-        assert len(COLOR_MAP) == 19
+        assert len(COLOR_MAP) == 33
 
     def test_all_expected_classes_present(self):
         """Every expected class name should be a key in COLOR_MAP."""

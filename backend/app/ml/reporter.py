@@ -18,6 +18,10 @@ from reportlab.platypus import (
     SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer,
     Image as RLImage, HRFlowable, KeepTogether,
 )
+
+from .scoring import SEVERITY_LABELS_SK as SK_SEVERITY
+from .scoring import compute_health
+from .taxonomy import CLASSES, DEFAULT
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
@@ -26,26 +30,48 @@ from reportlab.pdfbase.ttfonts import TTFont
 # ---------------------------------------------------------------------------
 # Font registration (supports Slovak diacritics)
 # ---------------------------------------------------------------------------
-def _register_unicode_font() -> str:
+def _register_unicode_font() -> tuple[str, str]:
+    """Zaregistruje font s podporou slovenskej diakritiky.
+
+    Skúša Windows, Linux aj font pribalený v reportlab (Vera), takže PDF je
+    čitateľné aj v Docker image bez systémových fontov.
+    """
     candidates = [
-        ("DejaVuSans", "C:/Windows/Fonts/DejaVuSans.ttf"),
-        ("Arial", "C:/Windows/Fonts/arial.ttf"),
-        ("Calibri", "C:/Windows/Fonts/calibri.ttf"),
-        ("Segoe UI", "C:/Windows/Fonts/segoeui.ttf"),
-        ("Verdana", "C:/Windows/Fonts/verdana.ttf"),
-        ("Tahoma", "C:/Windows/Fonts/tahoma.ttf"),
+        ("DejaVuSans", "DejaVuSans-Bold",
+         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+        ("Arial", "Arial-Bold",
+         "C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/arialbd.ttf"),
+        ("Segoe UI", "Segoe UI-Bold",
+         "C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/segoeuib.ttf"),
+        ("Calibri", "Calibri-Bold",
+         "C:/Windows/Fonts/calibri.ttf", "C:/Windows/Fonts/calibrib.ttf"),
+        ("Verdana", "Verdana-Bold",
+         "C:/Windows/Fonts/verdana.ttf", "C:/Windows/Fonts/verdanab.ttf"),
     ]
-    for name, path in candidates:
+    for name, bold_name, path, bold_path in candidates:
         try:
             pdfmetrics.registerFont(TTFont(name, path))
-            return name
+            pdfmetrics.registerFont(TTFont(bold_name, bold_path))
+            return name, bold_name
         except Exception:
             continue
-    return "Helvetica"
+
+    # Posledná záchranná sieť: Vera pribalená v reportlab (podporuje SK znaky).
+    try:
+        import os
+
+        from reportlab import rl_config
+
+        base = os.path.join(os.path.dirname(rl_config.__file__), "fonts")
+        pdfmetrics.registerFont(TTFont("Vera", os.path.join(base, "Vera.ttf")))
+        pdfmetrics.registerFont(TTFont("Vera-Bold", os.path.join(base, "VeraBd.ttf")))
+        return "Vera", "Vera-Bold"
+    except Exception:
+        return "Helvetica", "Helvetica-Bold"
 
 
-UNICODE_FONT: str = _register_unicode_font()
-UNICODE_FONT_BOLD: str = UNICODE_FONT  # same face, bold applied via tags
+UNICODE_FONT, UNICODE_FONT_BOLD = _register_unicode_font()
 
 # ---------------------------------------------------------------------------
 # Color constants
@@ -76,7 +102,7 @@ SEVERITY_BG = {
 # ---------------------------------------------------------------------------
 SK_LABELS = {
     "Caries": "Kaz",
-    "Deep Caries": "Hlbokejší kaz",
+    "Deep Caries": "Hlboký kaz",
     "Crown": "Korunka",
     "Implant": "Implantát",
     "Malaligned": "Zlá poloha zuba",
@@ -118,7 +144,7 @@ SK_RECOMMENDATIONS = {
     "Impacted tooth": "Chirurgické alebo ortodontické riešenie retinovaného zuba.",
     "impacted tooth": "Chirurgické alebo ortodontické riešenie retinovaného zuba.",
     "Filling": "Kontrola integrity plomby.",
-    "plating": "Kontrola dlhy a fixácie.",
+    "plating": "Kontrola dlahy a fixácie.",
     "wire": "Kontrola drôtovej fixácie.",
     "Cyst": "Chirurgické odstránenie cysty, histologické vyšetrenie.",
     "Root resorption": "Sledovanie progresie, prípadne endodoncia.",
@@ -162,22 +188,11 @@ def sk_recommendation(label: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Health score computation
+# Health score computation — jedna implementácia v app.ml.scoring
 # ---------------------------------------------------------------------------
-_SEVERITY_WEIGHT = {"urgent": 30, "treat_soon": 15, "watch": 5}
-
 def _compute_health_score(detections: list[dict]) -> dict:
-    """Compute health score (0-100) and breakdown."""
-    base = 100
-    breakdown = {"Urgentné": 0, "Liečiť čoskoro": 0, "Sledovať": 0}
-    for det in detections:
-        sev = det.get("severity", "watch")
-        w = _SEVERITY_WEIGHT.get(sev, 5)
-        base -= w
-        sk = SK_SEVERITY.get(sev, sev)
-        breakdown[sk] = breakdown.get(sk, 0) + 1
-    score = max(0, min(100, base))
-    return {"score": score, "breakdown": breakdown, "total": len(detections)}
+    """Vráti {"score": 0–100, "breakdown": {...}, "total": n}."""
+    return compute_health(detections)
 
 
 def _score_color(score: int) -> colors.Color:
@@ -282,6 +297,36 @@ def _styles():
 # ---------------------------------------------------------------------------
 # Main PDF generation
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Overlay image preparation (aspect ratio + veľkosť PDF)
+# ---------------------------------------------------------------------------
+OVERLAY_MAX_WIDTH_PX = 1600
+OVERLAY_JPEG_QUALITY = 85
+
+
+def _prepare_overlay(image_path: str) -> tuple[str, float]:
+    """Zmenší overlay a prekóduje ho do JPEG.
+
+    Zdrojové PNG má ~2,5 MB a iný pomer strán než A4 — bez tohto by bol report
+    zbytočne veľký a snímka rozťahaná. Vracia (cesta, pomer strán šírka/výška).
+    """
+    from PIL import Image
+
+    with Image.open(image_path) as im:
+        im = im.convert("RGB")
+        w, h = im.size
+        if w > OVERLAY_MAX_WIDTH_PX:
+            im = im.resize(
+                (OVERLAY_MAX_WIDTH_PX, max(1, round(h * OVERLAY_MAX_WIDTH_PX / w))),
+                Image.LANCZOS,
+            )
+            w, h = im.size
+        tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
+        tmp.close()
+        im.save(tmp.name, "JPEG", quality=OVERLAY_JPEG_QUALITY, optimize=True)
+    return tmp.name, (w / h if h else 1.0)
+
+
 def generate_pdf(
     result: dict,
     output_path: str = None,
@@ -423,10 +468,18 @@ def generate_pdf(
     story.append(Spacer(1, 4*mm))
 
     # ── OVERLAY IMAGE ────────────────────────────────────────────────────
+    overlay_tmp: str | None = None
     if image_path and os.path.isfile(image_path):
         story.append(Paragraph("Farebný overlay", S["h2"]))
         try:
-            img = RLImage(image_path, width=170*mm, height=120*mm)
+            overlay_tmp, aspect = _prepare_overlay(image_path)
+            img_w_mm = 174 * mm
+            img_h_mm = img_w_mm / aspect
+            max_h = 150 * mm
+            if img_h_mm > max_h:
+                img_h_mm = max_h
+                img_w_mm = img_h_mm * aspect
+            img = RLImage(overlay_tmp, width=img_w_mm, height=img_h_mm)
             story.append(img)
             story.append(Spacer(1, 3*mm))
             # Legend
@@ -490,7 +543,7 @@ def generate_pdf(
     ts = [
         ("BACKGROUND", (0, 0), (-1, 0), COLOR_PRIMARY),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, 0), UNICODE_FONT_BOLD),
         ("FONTSIZE", (0, 0), (-1, -1), 8),
         ("ALIGN", (0, 0), (-1, -1), "LEFT"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -619,6 +672,13 @@ def generate_pdf(
     doc.build(story)
     pdf_bytes = buf.getvalue()
     buf.close()
+
+    # Dočasný JPEG pre overlay už netreba
+    if overlay_tmp:
+        try:
+            os.remove(overlay_tmp)
+        except OSError:
+            pass
 
     # Write to output_path if provided
     if output_path:

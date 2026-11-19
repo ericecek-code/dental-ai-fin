@@ -3,10 +3,9 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 type ComparisonViewProps = {
   originalUrl?: string;
   enhancedUrl?: string;
-  detections?: any[];
 };
 
-export default function ComparisonView({ originalUrl, enhancedUrl, detections }: ComparisonViewProps) {
+export default function ComparisonView({ originalUrl, enhancedUrl }: ComparisonViewProps) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

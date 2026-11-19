@@ -4,11 +4,13 @@ SQLite database for storing Dental AI analysis results.
 Ukladá výsledky analýz, históriu a export do JSON/CSV.
 """
 
-import sqlite3
 import json
+import sqlite3
 from pathlib import Path
 
-DB_PATH = Path("/tmp/dental-ai/dental_ai.db")
+from app.core.config import settings
+
+DB_PATH = settings.data_path / "dental_ai.db"
 
 
 def _connect() -> sqlite3.Connection:

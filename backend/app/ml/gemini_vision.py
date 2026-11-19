@@ -9,10 +9,11 @@ import re
 import requests
 from typing import Dict, Any, List
 
+from app.core.config import settings
+
 logger = logging.getLogger(__name__)
 
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
-GEMINI_API_KEY = "AIzaSyD3CrVVRS6W2zDH0Lw64zvzgCkqxJLwMy0"
 
 # FDI tooth numbering: quadrant * 10 + position
 # Quadrant 1: upper right, 2: upper left, 3: lower left, 4: lower right
@@ -277,7 +278,7 @@ def analyze_xray_with_gemini(image_bgr, custom_prompt=None, temperature=0.3, max
             "generationConfig": {"temperature": temperature, "maxOutputTokens": 8192},
         }
 
-        url = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}"
+        url = f"{GEMINI_API_URL}?key={settings.gemini_api_key}"
 
         last_error = None
         for attempt in range(max_retries):

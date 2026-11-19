@@ -41,6 +41,7 @@ async def analyze_compare(file: UploadFile = File(...), conf: float = 0.05):
     from app.ml.gemini_vision import analyze_xray_with_gemini, match_yolo_gemini
     from app.ml.detector import Detector
     from app.ml.preprocessor import ImageEnhancer
+    from app.core.config import settings
 
     suffix = Path(file.filename).suffix.lower()
     if suffix not in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm"}:
@@ -53,14 +54,13 @@ async def analyze_compare(file: UploadFile = File(...), conf: float = 0.05):
         raise HTTPException(400, "Unreadable image")
 
     enhancer = ImageEnhancer()
-    detector = Detector(model_path="weights/yolov8x_dental.pt")
+    detector = Detector(model_path=str(settings.weights_path))
 
     start = time.time()
 
-    # YOLO detection
-    enhanced = enhancer.enhance(image)
-    yolo_result = detector.detect(enhanced, conf_threshold=conf)
-    yolo_detections = yolo_result.get("detections", [])
+    # YOLO detection – enhance() vracia dict, detektor potrebuje samotný obraz
+    enhanced = enhancer.enhance(image)["enhanced"]
+    yolo_detections = detector.predict(enhanced, conf=conf)
 
     # Gemini detection
     gemini_result = analyze_xray_with_gemini(image)
