@@ -175,16 +175,10 @@ def get_report(job_id: str, token: str | None = Query(default=None)):
     data = _load_result(job_id)
     output_path = REPORT_DIR / f"{job_id}.pdf"
 
-    # Overlay musíme odovzdať explicitne: SQLite záznam neuchováva cesty
-    # k obrázkom, takže bez tohto by report vyšiel bez snímky.
-    overlay = OUTPUT_DIR / f"{job_id}_overlay.png"
-    if not overlay.exists():
-        overlay = OUTPUT_DIR / f"{job_id}_enhanced.png"
-
     generate_pdf(
         data,
         str(output_path),
-        image_path=str(overlay) if overlay.exists() else None,
+        image_path=None,  # obrázok sa po analýze vymaže — PDF bez snímky
         measurements=data.get("measurements"),
         patient_id=data.get("patient_id"),
         xray_type=data.get("xray_type", "panoramic"),

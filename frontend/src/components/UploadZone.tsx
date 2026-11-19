@@ -81,6 +81,10 @@ const UploadZone = forwardRef<UploadZoneHandle, Props>(({ onFile }, ref) => {
     if (inputRef.current) inputRef.current.value = "";
   };
 
+  const openFilePicker = useCallback(() => {
+    inputRef.current?.click();
+  }, []);
+
   const hasFile = file !== null;
 
   return (
@@ -89,12 +93,14 @@ const UploadZone = forwardRef<UploadZoneHandle, Props>(({ onFile }, ref) => {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onClick={openFilePicker}
       role="button"
       tabIndex={0}
+      aria-label="Nahrať RTG snímku"
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          inputRef.current?.click();
+          openFilePicker();
         }
       }}
     >
@@ -122,7 +128,10 @@ const UploadZone = forwardRef<UploadZoneHandle, Props>(({ onFile }, ref) => {
             </p>
           </div>
           <button
-            onClick={removeFile}
+            onClick={(e) => {
+              e.stopPropagation();
+              removeFile();
+            }}
             className="mt-2 text-xs text-slate-400 hover:text-red-400 transition-colors"
           >
             Odstrániť
@@ -153,15 +162,17 @@ const UploadZone = forwardRef<UploadZoneHandle, Props>(({ onFile }, ref) => {
           <p className="text-[10px] text-slate-600 mt-0.5">
             JPEG, PNG, TIFF, DICOM • max {MAX_SIZE_MB} MB
           </p>
-          <input
-            ref={inputRef}
-            type="file"
-            className="hidden"
-            accept="image/*,.dcm"
-            onChange={handleFileSelect}
-          />
         </div>
       )}
+
+      {/* Input musí byť v DOM vždy — inak klik po výbere súboru nič neurobí */}
+      <input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        accept="image/*,.dcm"
+        onChange={handleFileSelect}
+      />
     </div>
   );
 });

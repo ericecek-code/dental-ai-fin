@@ -226,8 +226,6 @@ async def analyze_xray(
             "filename": safe_filename,
             "privacy": privacy,
             "conf_threshold": conf,
-            "enhanced_image_path": str(enhanced_path),
-            "overlay_path": str(overlay_path),
             "detection_count": len(detections),
             "by_class": by_class,
             "detections": detections,
@@ -243,6 +241,14 @@ async def analyze_xray(
             save_analysis(job_id, result)
         except Exception:
             pass  # non-critical
+
+        # --- Vymazanie obrázkov z disku po analýze (ochrana súkromia) ---
+        # Snímka sa nesmie zostať uložená ani po vygenerovaní PDF.
+        for p in (enhanced_path, overlay_path):
+            try:
+                p.unlink(missing_ok=True)
+            except OSError:
+                pass
 
         return result
 

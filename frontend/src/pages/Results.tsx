@@ -1,15 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useAnalyze } from '../hooks/useAnalysis';
 import UploadZone from '../components/UploadZone';
-import CanvasOverlay from '../components/ImageViewer/CanvasOverlay';
-import type { ViewMode } from '../components/ImageViewer/CanvasOverlay';
-import Controls from '../components/ImageViewer/Controls';
 import ProgressTracker from '../components/ProgressTracker';
 import Navbar from '../components/Navbar';
 import HealthScoreGauge from '../components/HealthScoreGauge';
 import FindingCard from '../components/FindingCard';
 import Odontogram from '../components/Odontogram';
-import ComparisonView from '../components/ComparisonView';
 import Annotations from '../components/Annotations';
 import HistoryPanel from '../components/HistoryPanel';
 import MeasurementsPanel from '../components/MeasurementsPanel';
@@ -69,17 +65,9 @@ async function downloadFile(url: string, filename: string) {
 
 const Results = () => {
   const [status, setStatus] = useState<string>('idle');
-  const [confidence, setConfidence] = useState(0.05);
   const [yoloResult, setYoloResult] = useState<AnalyzeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const [viewMode, setViewMode] = useState<ViewMode>('clinical');
-  const [imageMode, setImageMode] = useState<'original' | 'enhanced' | 'pseudocolor' | 'heatmap'>('original');
-  const [colormap, setColormap] = useState('bone');
   const [, setHoveredDetection] = useState<number | null>(null);
-
-  // New state: comparison view toggle
-  const [showComparison, setShowComparison] = useState(false);
 
   const analyze = useAnalyze();
 
@@ -87,11 +75,9 @@ const Results = () => {
     setError(null);
     setStatus('uploading');
     setYoloResult(null);
-    setImageMode('original');
-    setShowComparison(false);
 
     analyze.mutate(
-      { file, conf: confidence },
+      { file, conf: 0.05 },
       {
         onSuccess: (data) => {
           setYoloResult(data as AnalyzeResult);
@@ -105,25 +91,6 @@ const Results = () => {
       },
     );
   };
-
-  const imageUrl = useMemo(() => {
-    if (!yoloResult) return undefined;
-    const base = `${API_BASE}/results/${yoloResult.job_id}`;
-    switch (imageMode) {
-      case 'enhanced': return `${base}/enhanced?ts=${Date.now()}`;
-      case 'pseudocolor': return `${base}/pseudocolor?colormap=${colormap}&ts=${Date.now()}`;
-      case 'heatmap': return `${base}/heatmap?ts=${Date.now()}`;
-      default: return `${base}/original?ts=${Date.now()}`;
-    }
-  }, [yoloResult, imageMode, colormap]);
-
-  const mappedDetections = useMemo(() => {
-    return (yoloResult?.detections || []).map((d) => ({
-      ...d,
-      class_name: d.label,
-      class_id: d.class_id,
-    }));
-  }, [yoloResult]);
 
   const healthScore = useMemo(() => computeHealthScore(yoloResult), [yoloResult]);
 
@@ -150,19 +117,6 @@ const Results = () => {
       <Navbar />
 
       <div className="flex flex-col h-[calc(100vh-52px)]">
-        {/* Controls bar */}
-        <div className="glass-panel-strong border-b border-white/5">
-          <Controls
-            confidence={confidence}
-            onChangeConfidence={setConfidence}
-            viewMode={viewMode}
-            onChangeViewMode={setViewMode}
-            imageMode={imageMode}
-            onChangeImageMode={setImageMode}
-            colormap={colormap}
-            onChangeColormap={setColormap}
-          />
-        </div>
 
         {/* Main 3-column layout */}
         <div className="flex-1 flex overflow-hidden">
@@ -214,57 +168,6 @@ const Results = () => {
               )}
             </div>
 
-            {/* Image mode shortcuts */}
-            {yoloResult && (
-              <div className="glass-panel p-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-dental-textMuted mb-3">
-                  Zobrazenie obrazu
-                </h3>
-                <div className="space-y-1">
-                  {[
-                    { key: 'original' as const, label: 'Originál' },
-                    { key: 'enhanced' as const, label: 'CLAHE zlepšenie' },
-                    { key: 'pseudocolor' as const, label: 'Pseudocolor' },
-                    { key: 'heatmap' as const, label: 'Heatmapa' },
-                  ].map((m) => (
-                    <button
-                      key={m.key}
-                      onClick={() => setImageMode(m.key)}
-                      className={`
-                        w-full text-left px-3 py-2 rounded-lg text-[11px] font-medium transition-all duration-200
-                        ${imageMode === m.key
-                          ? 'bg-dental-primary/15 text-dental-primary'
-                          : 'text-dental-textMuted hover:bg-dental-surfaceHighlight/50 hover:text-dental-textMain'
-                        }
-                      `}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Comparison view toggle */}
-            {yoloResult && (
-              <button
-                onClick={() => setShowComparison(!showComparison)}
-                className={`
-                  w-full flex items-center justify-center gap-2 p-3 rounded-lg text-xs font-semibold transition-all duration-200
-                  ${showComparison
-                    ? 'bg-dental-primary/20 text-dental-primary border border-dental-primary/30'
-                    : 'glass-panel text-dental-textMuted hover:text-dental-textMain hover:bg-dental-surfaceHighlight/50'
-                  }
-                `}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="2" y="3" width="8" height="18" rx="1" />
-                  <rect x="14" y="3" width="8" height="18" rx="1" />
-                </svg>
-                {showComparison ? 'Porovnanie zapnuté' : 'Porovnanie snímok'}
-              </button>
-            )}
-
             {/* Export buttons */}
             {yoloResult && (
               <div className="glass-panel p-4">
@@ -315,52 +218,59 @@ const Results = () => {
             <HistoryPanel />
           </aside>
 
-          {/* ═══ CENTER CANVAS ═══ */}
+          {/* ═══ CENTER: Výsledky analýzy (snímka bola vymazaná) ═══ */}
           <main className="flex-1 flex flex-col overflow-hidden p-4">
-            {showComparison ? (
-              /* Comparison View */
-              <div className="flex-1 flex flex-col gap-4 overflow-y-auto">
-                <ComparisonView
-                  originalUrl={yoloResult ? `${API_BASE}/results/${yoloResult.job_id}/original` : undefined}
-                  enhancedUrl={yoloResult ? `${API_BASE}/results/${yoloResult.job_id}/enhanced` : undefined}
-                />
-                {/* Detection overlay list in comparison mode */}
-                {mappedDetections.length > 0 && (
-                  <div className="glass-panel p-4">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-dental-textMuted mb-3">
-                      Nálezy na porovnanie
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2 text-[11px]">
-                      {mappedDetections.map((d, i) => (
-                        <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50">
-                          <span className="w-2 h-2 rounded-full bg-dental-primary shrink-0" />
-                          <span className="text-white truncate">{translateClass(d.label)}</span>
-                          <span className="text-dental-primary font-mono ml-auto">{(d.confidence * 100).toFixed(1)}%</span>
+            {yoloResult ? (
+              <div className="glass-panel-strong flex-1 flex flex-col items-center justify-center text-center p-8">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-dental-textMain mb-2">Snímka bola vymazaná</h3>
+                <p className="text-dental-textMuted max-w-md mx-auto mb-6">
+                  V intérêtoch ochrany súkromia pacienta bola RTG snímka a všetky
+                  generované obrázky (overlay, enhanced, heatmap) po analýze trvalo
+                  odstránené zo serveru. PDF report je generovaný bez vloženého
+                  obrázka — obsahuje len textovú tabuľku nálezov.
+                </p>
+                <div className="glass-panel p-4 w-full max-w-md">
+                  <h4 className="text-xs font-semibold text-dental-textMuted uppercase tracking-wider mb-3">Detekované nálezy</h4>
+                  <div className="space-y-2">
+                    {yoloResult.detections.map((d, i) => (
+                      <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-slate-800/50 text-sm">
+                        <span className={`w-2 h-2 rounded-full shrink-0 mt-0.5 ${d.severity === 'urgent' ? 'bg-rose-400' : d.severity === 'treat_soon' ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                        <div className="flex-1">
+                          <div className="flex justify-between text-[11px]">
+                            <span className="text-dental-textMain font-medium">{d.label_sk || d.label}</span>
+                            <span className="text-dental-textMuted font-mono">{Math.round(d.confidence * 100)}%</span>
+                          </div>
+                          {d.tooth_number && (
+                            <div className="text-[10px] text-dental-textMuted">Zub: {d.tooth_number}</div>
+                          )}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
+                    {yoloResult.detections.length === 0 && (
+                      <p className="text-[11px] text-dental-textMuted text-center py-2">Žiadne nálezy</p>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             ) : (
-              /* Normal canvas view */
-              <div className="glass-panel flex-1 flex flex-col overflow-hidden scan-line-overlay">
-                <div className="flex-1 overflow-hidden">
-                  <CanvasOverlay
-                    imageUrl={imageUrl}
-                    detections={mappedDetections}
-                    viewMode={viewMode}
-                  />
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                <div className="w-16 h-16 rounded-full bg-cyan-500/10 flex items-center justify-center mx-auto mb-4">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
                 </div>
-                {/* Bottom info bar */}
-                <div className="px-4 py-2 border-t border-white/5 flex items-center justify-between text-[10px] text-dental-textMuted">
-                  <span>
-                    R = boxy · F = kurzor · 0 = reset · koliesko = zoom
-                  </span>
-                  <span>
-                    {viewMode === 'clinical' ? '🏥 Klinický režim' : '👤 Pacientský režim'}
-                  </span>
-                </div>
+                <h3 className="text-lg font-bold text-dental-textMain mb-2">Pripravený na analýzu</h3>
+                <p className="text-dental-textMuted max-w-sm mx-auto">
+                  Nahrajte panoramatický RTG snímku. Po analýze bude snímka trvalo
+                  odstránená zo serveru (ochrana súkromia).
+                </p>
               </div>
             )}
           </main>

@@ -22,7 +22,9 @@ export default function HistoryPanel({ onSelectJob }: Props) {
     staleTime: 30000,
   });
 
-  if (!history?.length) {
+  const items = Array.isArray(history) ? history : [];
+
+  if (!items.length) {
     return (
       <div className="glass-panel rounded-2xl p-4">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-dental-textMuted mb-3">
@@ -41,7 +43,7 @@ export default function HistoryPanel({ onSelectJob }: Props) {
         Posledné analýzy
       </h3>
       <div className="space-y-2">
-        {history.slice(0, 5).map((item: Analysis) => (
+        {items.slice(0, 5).map((item: Analysis) => (
           <div
             key={item.id}
             onClick={() => onSelectJob?.(item.id)}
