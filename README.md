@@ -18,6 +18,8 @@ tags:
 
 **AI-powered dental X-ray analysis — detect dental conditions with color-coded overlays, measurements, and professional PDF reports.**
 
+**Live demo:** https://ericecek-dental-ai.hf.space
+
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-311/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-FF6B6B.svg)](https://docs.ultralytics.com/)
