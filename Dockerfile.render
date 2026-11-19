@@ -38,6 +38,10 @@ RUN pip install -r requirements.txt
 # Copy backend application code (weights filtered by .dockerignore)
 COPY backend/ ./
 
+# Render nevie garantovať Git LFS — ak je váha len LFS pointer (<1 KB),
+# stiahni produkčný model z verejného HF repa.
+RUN python -c "import os,urllib.request; p='weights/yolov8x_dental.pt'; u='https://huggingface.co/spaces/Ericecek/dental-ai/resolve/main/backend/weights/yolov8x_dental.pt'; print('model ok' if os.path.exists(p) and os.path.getsize(p)>1000000 else 'stahujem model'); os.path.exists(p) and os.path.getsize(p)>1000000 or urllib.request.urlretrieve(u,p)"
+
 # Copy built frontend static files into backend/static
 COPY --from=frontend-builder /app/frontend/dist ./static
 
@@ -53,7 +57,7 @@ EXPOSE 8000
 
 # Healthcheck must follow $PORT, not a hardcoded 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD python -c "import os,urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\", \"8000\")}/health', timeout=5)"
+    CMD python -c "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('PORT', '8000') + '/health', timeout=5)"
 
 # Run backend (serves API + static frontend)
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

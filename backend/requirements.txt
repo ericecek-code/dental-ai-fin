@@ -1,4 +1,4 @@
-"""Závislosti backendu. Inštalácia: pip install -r backend/requirements.txt"""
+# Závislosti backendu. Inštalácia: pip install -r backend/requirements.txt
 
 # --- Web framework ----------------------------------------------------------
 uvicorn[standard]==0.30.0
